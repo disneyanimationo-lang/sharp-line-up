@@ -194,6 +194,7 @@ const QueueStatus = ({ queueData, service, shop, onBack }) => {
           onOpenChange={setShowRatingDialog}
           queueId={queueData.id}
           shopName={shop.name}
+          serviceName={service.name}
           onRatingSubmitted={() => setHasRated(true)}
         />
       </div>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Star } from 'lucide-react';
+import { Star, Sparkles } from 'lucide-react';
 import { submitRating } from '@/services/queueApi';
 import { toast } from 'sonner';
 
@@ -11,10 +11,18 @@ interface RatingDialogProps {
   onOpenChange: (open: boolean) => void;
   queueId: string;
   shopName: string;
+  serviceName: string;
   onRatingSubmitted: () => void;
 }
 
-const RatingDialog = ({ open, onOpenChange, queueId, shopName, onRatingSubmitted }: RatingDialogProps) => {
+const RatingDialog = ({ 
+  open, 
+  onOpenChange, 
+  queueId, 
+  shopName,
+  serviceName,
+  onRatingSubmitted 
+}: RatingDialogProps) => {
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
@@ -43,9 +51,16 @@ const RatingDialog = ({ open, onOpenChange, queueId, shopName, onRatingSubmitted
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Rate Your Experience</DialogTitle>
-          <DialogDescription>
-            How was your experience at {shopName}?
+          <div className="flex items-center justify-center mb-4">
+            <div className="bg-primary/10 p-4 rounded-full">
+              <Sparkles className="w-8 h-8 text-primary" />
+            </div>
+          </div>
+          <DialogTitle className="text-center text-2xl">
+            Congratulations on your new {serviceName}!
+          </DialogTitle>
+          <DialogDescription className="text-center">
+            We hope you loved your experience at {shopName}. Please share your feedback!
           </DialogDescription>
         </DialogHeader>
 
