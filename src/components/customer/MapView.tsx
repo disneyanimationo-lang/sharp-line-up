@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { Icon, LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -42,16 +42,6 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Component to center map on user location
-function MapCenterController({ center }: { center: LatLngExpression }) {
-  const map = useMap();
-  
-  useEffect(() => {
-    map.setView(center, 13);
-  }, [center, map]);
-  
-  return null;
-}
 
 // Component for map content
 function MapContent({ shops, userLocation, onShopSelect }: { 
@@ -145,6 +135,7 @@ const MapView = ({ shops, userLocation, onShopSelect }: MapViewProps) => {
     <div className="w-full h-[600px] rounded-lg overflow-hidden border border-border">
       <ClientOnly>
         <MapContainer
+          key={JSON.stringify(center)}
           center={center}
           zoom={13}
           className="w-full h-full"
@@ -154,7 +145,6 @@ const MapView = ({ shops, userLocation, onShopSelect }: MapViewProps) => {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <MapCenterController center={center} />
           <MapContent shops={shops} userLocation={userLocation} onShopSelect={onShopSelect} />
         </MapContainer>
       </ClientOnly>
