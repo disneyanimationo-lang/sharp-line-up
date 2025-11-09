@@ -5,17 +5,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Scissors, Loader2 } from 'lucide-react';
+import { Scissors, Loader2, User, Store } from 'lucide-react';
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, userRole } = useAuth();
   const [loading, setLoading] = useState(false);
   
   const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [signupData, setSignupData] = useState({ email: '', password: '', confirmPassword: '' });
+  const [signupData, setSignupData] = useState({ 
+    email: '', 
+    password: '', 
+    confirmPassword: '', 
+    role: 'customer' as 'customer' | 'shop_owner' 
+  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +41,12 @@ const Auth = () => {
     }
 
     toast.success('Welcome back!');
-    navigate('/');
+    
+    // Wait a moment for role to be checked
+    setTimeout(() => {
+      // Redirect based on role will happen in useEffect
+      navigate('/');
+    }, 500);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -57,7 +68,7 @@ const Auth = () => {
     }
 
     setLoading(true);
-    const { error } = await signUp(signupData.email, signupData.password);
+    const { error } = await signUp(signupData.email, signupData.password, signupData.role);
     setLoading(false);
 
     if (error) {
@@ -65,8 +76,16 @@ const Auth = () => {
       return;
     }
 
-    toast.success('Account created successfully!');
-    navigate('/');
+    toast.success(`Account created successfully as ${signupData.role === 'shop_owner' ? 'Shop Owner' : 'Customer'}!`);
+    
+    // Redirect based on role
+    setTimeout(() => {
+      if (signupData.role === 'shop_owner') {
+        navigate('/dashboard');
+      } else {
+        navigate('/');
+      }
+    }, 500);
   };
 
   return (
@@ -128,6 +147,43 @@ const Auth = () => {
 
             <TabsContent value="signup">
               <form onSubmit={handleSignup} className="space-y-4">
+                <div className="space-y-3">
+                  <Label>I am a...</Label>
+                  <RadioGroup 
+                    value={signupData.role} 
+                    onValueChange={(value: 'customer' | 'shop_owner') => 
+                      setSignupData({ ...signupData, role: value })
+                    }
+                    disabled={loading}
+                  >
+                    <div className="flex items-center space-x-3 p-4 border border-border rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+                      <RadioGroupItem value="customer" id="customer" />
+                      <Label htmlFor="customer" className="flex items-center gap-3 cursor-pointer flex-1">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-medium">Customer</div>
+                          <div className="text-sm text-muted-foreground">Join queues and book services</div>
+                        </div>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3 p-4 border border-border rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+                      <RadioGroupItem value="shop_owner" id="shop_owner" />
+                      <Label htmlFor="shop_owner" className="flex items-center gap-3 cursor-pointer flex-1">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Store className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-medium">Shop Owner</div>
+                          <div className="text-sm text-muted-foreground">Manage your barbershop</div>
+                        </div>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
                   <Input

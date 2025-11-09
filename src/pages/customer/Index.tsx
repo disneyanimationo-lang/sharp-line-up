@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Scissors, Clock, QrCode, MapPin, Users, TrendingUp, LogIn, LayoutDashboard } from 'lucide-react';
@@ -14,8 +14,15 @@ const Index = () => {
   const [selectedShop, setSelectedShop] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [queueData, setQueueData] = useState(null);
-  const { user, isShopOwner } = useAuth();
+  const { user, isShopOwner, userRole, loading } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect shop owners to dashboard
+  useEffect(() => {
+    if (!loading && user && isShopOwner) {
+      navigate('/dashboard');
+    }
+  }, [user, isShopOwner, loading, navigate]);
 
   const handleShopSelect = (shop) => {
     setSelectedShop(shop);

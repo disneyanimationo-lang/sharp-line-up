@@ -7,9 +7,11 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, role: 'customer' | 'shop_owner') => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   isShopOwner: boolean;
+  isCustomer: boolean;
+  userRole: 'customer' | 'shop_owner' | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,6 +21,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isShopOwner, setIsShopOwner] = useState(false);
+  const [isCustomer, setIsCustomer] = useState(false);
+  const [userRole, setUserRole] = useState<'customer' | 'shop_owner' | null>(null);
 
   useEffect(() => {
     // Set up auth state listener
@@ -57,10 +61,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .from('user_roles')
       .select('role')
       .eq('user_id', userId)
-      .eq('role', 'shop_owner')
       .single();
     
-    setIsShopOwner(!!data);
+    if (data) {
+      setUserRole(data.role as 'customer' | 'shop_owner');
+      setIsShopOwner(data.role === 'shop_owner');
+      setIsCustomer(data.role === 'customer');
+    } else {
+      setUserRole(null);
+      setIsShopOwner(false);
+      setIsCustomer(false);
+    }
   };
 
   const signIn = async (email: string, password: string) => {
@@ -71,7 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return { error };
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, role: 'customer' | 'shop_owner') => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -79,6 +90,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       password,
       options: {
         emailRedirectTo: redirectUrl,
+        data: {
+          role: role,
+        },
       },
     });
     return { error };
@@ -89,7 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, isShopOwner }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, isShopOwner, isCustomer, userRole }}>
       {children}
     </AuthContext.Provider>
   );
