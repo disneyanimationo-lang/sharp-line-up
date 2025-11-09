@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Icon, LatLngExpression } from 'leaflet';
 import { Card } from '@/components/ui/card';
@@ -21,7 +21,7 @@ Icon.Default.mergeOptions({
 
 // Custom icon for user location
 const userLocationIcon = new Icon({
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4IiBmaWxsPSIjMzb4OEZGIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMyIvPjwvc3ZnPg==',
+  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4IiBmaWxsPSIjMzY4OEZGIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMyIvPjwvc3ZnPg==',
   iconSize: [24, 24],
   iconAnchor: [12, 12],
 });
@@ -35,7 +35,7 @@ const shopIcon = new Icon({
 });
 
 // Component to center map on user location
-const MapCenterController = ({ center }: { center: LatLngExpression }) => {
+function MapCenterController({ center }: { center: LatLngExpression }) {
   const map = useMap();
   
   useEffect(() => {
@@ -43,7 +43,70 @@ const MapCenterController = ({ center }: { center: LatLngExpression }) => {
   }, [center, map]);
   
   return null;
-};
+}
+
+// Component for map content
+function MapContent({ shops, userLocation, onShopSelect }: { 
+  shops: any[], 
+  userLocation: { latitude: number | null; longitude: number | null },
+  onShopSelect: (shop: any) => void 
+}) {
+  return (
+    <>
+      {userLocation.latitude && userLocation.longitude && (
+        <Marker
+          position={[userLocation.latitude, userLocation.longitude]}
+          icon={userLocationIcon}
+        >
+          <Popup>
+            <div className="text-center font-semibold">Your Location</div>
+          </Popup>
+        </Marker>
+      )}
+
+      {shops.filter(shop => shop.latitude && shop.longitude).map((shop) => (
+        <Marker
+          key={shop.id}
+          position={[shop.latitude, shop.longitude]}
+          icon={shopIcon}
+        >
+          <Popup>
+            <Card className="border-0 shadow-none p-2 min-w-[250px]">
+              <h3 className="text-lg font-bold mb-2">{shop.name}</h3>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <MapPin className="w-3 h-3" />
+                <span>{shop.address}</span>
+              </div>
+              <div className="flex items-center gap-1 mb-3">
+                <Star className="w-3 h-3 fill-primary text-primary" />
+                <span className="font-semibold text-sm">{shop.rating}</span>
+                {shop.distance !== null && (
+                  <span className="text-muted-foreground text-sm ml-2">• {shop.distance} miles</span>
+                )}
+              </div>
+              <div className="flex items-center gap-4 mb-3 text-sm">
+                <div className="flex items-center gap-1">
+                  <Clock className="w-4 h-4 text-primary" />
+                  <span>{shop.estimated_wait || 0} min</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">{shop.currentQueue || 0} in queue</span>
+                </div>
+              </div>
+              <Button 
+                size="sm"
+                className="w-full"
+                onClick={() => onShopSelect(shop)}
+              >
+                Join Queue
+              </Button>
+            </Card>
+          </Popup>
+        </Marker>
+      ))}
+    </>
+  );
+}
 
 interface MapViewProps {
   shops: any[];
@@ -55,10 +118,12 @@ const MapView = ({ shops, userLocation, onShopSelect }: MapViewProps) => {
   // Default center (fallback if no user location)
   const defaultCenter: LatLngExpression = [40.7128, -74.0060]; // New York
   
-  const center: LatLngExpression = 
+  const center: LatLngExpression = useMemo(() => 
     userLocation.latitude && userLocation.longitude
       ? [userLocation.latitude, userLocation.longitude]
-      : defaultCenter;
+      : defaultCenter,
+    [userLocation.latitude, userLocation.longitude]
+  );
 
   return (
     <div className="w-full h-[600px] rounded-lg overflow-hidden border border-border">
@@ -72,66 +137,8 @@ const MapView = ({ shops, userLocation, onShopSelect }: MapViewProps) => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        
         <MapCenterController center={center} />
-
-        {/* User location marker */}
-        {userLocation.latitude && userLocation.longitude && (
-          <Marker
-            position={[userLocation.latitude, userLocation.longitude]}
-            icon={userLocationIcon}
-          >
-            <Popup>
-              <div className="text-center font-semibold">Your Location</div>
-            </Popup>
-          </Marker>
-        )}
-
-        {/* Shop markers */}
-        {shops.map((shop) => {
-          if (!shop.latitude || !shop.longitude) return null;
-          
-          return (
-            <Marker
-              key={shop.id}
-              position={[shop.latitude, shop.longitude]}
-              icon={shopIcon}
-            >
-              <Popup>
-                <Card className="border-0 shadow-none p-2 min-w-[250px]">
-                  <h3 className="text-lg font-bold mb-2">{shop.name}</h3>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                    <MapPin className="w-3 h-3" />
-                    <span>{shop.address}</span>
-                  </div>
-                  <div className="flex items-center gap-1 mb-3">
-                    <Star className="w-3 h-3 fill-primary text-primary" />
-                    <span className="font-semibold text-sm">{shop.rating}</span>
-                    {shop.distance !== null && (
-                      <span className="text-muted-foreground text-sm ml-2">• {shop.distance} miles</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4 mb-3 text-sm">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4 text-primary" />
-                      <span>{shop.estimated_wait || 0} min</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">{shop.currentQueue || 0} in queue</span>
-                    </div>
-                  </div>
-                  <Button 
-                    size="sm"
-                    className="w-full"
-                    onClick={() => onShopSelect(shop)}
-                  >
-                    Join Queue
-                  </Button>
-                </Card>
-              </Popup>
-            </Marker>
-          );
-        })}
+        <MapContent shops={shops} userLocation={userLocation} onShopSelect={onShopSelect} />
       </MapContainer>
     </div>
   );
