@@ -14,7 +14,162 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      queues: {
+        Row: {
+          completed_at: string | null
+          customer_name: string
+          estimated_wait: number
+          id: string
+          joined_at: string | null
+          position: number
+          service_id: string
+          shop_id: string
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          customer_name: string
+          estimated_wait: number
+          id?: string
+          joined_at?: string | null
+          position: number
+          service_id: string
+          shop_id: string
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          customer_name?: string
+          estimated_wait?: number
+          id?: string
+          joined_at?: string | null
+          position?: number
+          service_id?: string
+          shop_id?: string
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "queues_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "queues_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration: number
+          id: string
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration: number
+          id?: string
+          name: string
+          price: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration?: number
+          id?: string
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
+      shop_services: {
+        Row: {
+          id: string
+          service_id: string
+          shop_id: string
+        }
+        Insert: {
+          id?: string
+          service_id: string
+          shop_id: string
+        }
+        Update: {
+          id?: string
+          service_id?: string
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_services_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shops: {
+        Row: {
+          address: string
+          created_at: string | null
+          current_queue: number | null
+          distance: number | null
+          estimated_wait: number | null
+          id: string
+          image: string | null
+          name: string
+          qr_code: string
+          rating: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          created_at?: string | null
+          current_queue?: number | null
+          distance?: number | null
+          estimated_wait?: number | null
+          id?: string
+          image?: string | null
+          name: string
+          qr_code: string
+          rating?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string | null
+          current_queue?: number | null
+          distance?: number | null
+          estimated_wait?: number | null
+          id?: string
+          image?: string | null
+          name?: string
+          qr_code?: string
+          rating?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
