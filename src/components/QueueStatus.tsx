@@ -2,25 +2,30 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, Users, CheckCircle } from 'lucide-react';
+import { mockApi } from '@/services/mockApi';
+import { toast } from 'sonner';
 
-const QueueStatus = ({ position, service, shop, onBack }) => {
-  const [currentPosition, setCurrentPosition] = useState(position);
-  const [estimatedWait, setEstimatedWait] = useState(position * 20);
+const QueueStatus = ({ queueData, service, shop, onBack }) => {
+  const [currentPosition, setCurrentPosition] = useState(queueData?.position || 1);
+  const [estimatedWait, setEstimatedWait] = useState(queueData?.estimatedWait || 30);
 
-  // Simulate queue movement
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentPosition(prev => {
-        if (prev > 1) {
-          setEstimatedWait(est => Math.max(0, est - 20));
-          return prev - 1;
+    if (!queueData?.id) return;
+
+    const interval = setInterval(async () => {
+      const { data, error } = await mockApi.getQueueStatus(queueData.id);
+      if (!error && data) {
+        setCurrentPosition(data.position);
+        setEstimatedWait(data.estimatedWait);
+        
+        if (data.position === 1) {
+          toast.success("You're next! Please head to the shop.");
         }
-        return prev;
-      });
-    }, 15000); // Move up every 15 seconds for demo
+      }
+    }, 15000); // Poll every 15 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [queueData?.id]);
 
   const getStatusMessage = () => {
     if (currentPosition === 1) {
@@ -74,7 +79,7 @@ const QueueStatus = ({ position, service, shop, onBack }) => {
           <div className="h-2 bg-secondary rounded-full overflow-hidden mb-6">
             <div 
               className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-1000"
-              style={{ width: `${((position - currentPosition) / position) * 100}%` }}
+              style={{ width: `${((queueData.position - currentPosition) / queueData.position) * 100}%` }}
             ></div>
           </div>
 
@@ -102,7 +107,7 @@ const QueueStatus = ({ position, service, shop, onBack }) => {
               <div className="text-muted-foreground">{service.description}</div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-primary">{service.price}</div>
+              <div className="text-2xl font-bold text-primary">${service.price}</div>
               <div className="text-sm text-muted-foreground">{service.duration} min</div>
             </div>
           </div>

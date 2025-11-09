@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Scissors, Clock, QrCode, MapPin, Users, TrendingUp } from 'lucide-react';
 import heroImage from "@/assets/hero-barber.jpg";
 import ShopList from '@/components/ShopList';
@@ -12,18 +11,16 @@ const Index = () => {
   const [view, setView] = useState('home'); // home, shops, service, queue
   const [selectedShop, setSelectedShop] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
-  const [queuePosition, setQueuePosition] = useState(null);
+  const [queueData, setQueueData] = useState(null);
 
   const handleShopSelect = (shop) => {
     setSelectedShop(shop);
     setView('service');
   };
 
-  const handleServiceSelect = (service) => {
+  const handleServiceSelect = (service, queue) => {
     setSelectedService(service);
-    // Simulate joining queue
-    const position = Math.floor(Math.random() * 8) + 1;
-    setQueuePosition(position);
+    setQueueData(queue);
     setView('queue');
   };
 
@@ -31,7 +28,7 @@ const Index = () => {
     setView('shops');
     setSelectedShop(null);
     setSelectedService(null);
-    setQueuePosition(null);
+    setQueueData(null);
   };
 
   if (view === 'shops') {
@@ -42,8 +39,8 @@ const Index = () => {
     return <ServiceSelection shop={selectedShop} onServiceSelect={handleServiceSelect} onBack={handleBackToShops} />;
   }
 
-  if (view === 'queue' && queuePosition) {
-    return <QueueStatus position={queuePosition} service={selectedService} shop={selectedShop} onBack={handleBackToShops} />;
+  if (view === 'queue' && queueData) {
+    return <QueueStatus queueData={queueData} service={selectedService} shop={selectedShop} onBack={handleBackToShops} />;
   }
 
   return (

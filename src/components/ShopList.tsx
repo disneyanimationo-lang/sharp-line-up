@@ -1,60 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, Star, Clock, Search } from 'lucide-react';
-
-const mockShops = [
-  {
-    id: 1,
-    name: "Classic Cuts Barbershop",
-    address: "123 Main St, Downtown",
-    rating: 4.8,
-    distance: "0.5 miles",
-    waitTime: 15,
-    queueLength: 3,
-    services: ["Haircut", "Beard Trim", "Hot Towel Shave"]
-  },
-  {
-    id: 2,
-    name: "The Gentleman's Parlor",
-    address: "456 Oak Ave, Midtown",
-    rating: 4.9,
-    distance: "1.2 miles",
-    waitTime: 25,
-    queueLength: 5,
-    services: ["Haircut", "Beard Trim", "Hair Styling"]
-  },
-  {
-    id: 3,
-    name: "Urban Fade Studio",
-    address: "789 Elm St, Uptown",
-    rating: 4.7,
-    distance: "1.8 miles",
-    waitTime: 20,
-    queueLength: 4,
-    services: ["Haircut", "Fade", "Beard Trim"]
-  },
-  {
-    id: 4,
-    name: "Royal Barber Lounge",
-    address: "321 Pine Rd, West Side",
-    rating: 4.6,
-    distance: "2.1 miles",
-    waitTime: 30,
-    queueLength: 6,
-    services: ["Haircut", "Shave", "Hair Treatment"]
-  }
-];
+import { MapPin, Star, Clock, Search, Loader2 } from 'lucide-react';
+import { mockApi } from '@/services/mockApi';
 
 const ShopList = ({ onShopSelect }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [shops] = useState(mockShops);
+  const [shops, setShops] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredShops = shops.filter(shop => 
-    shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    shop.address.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    loadShops();
+  }, []);
+
+  const loadShops = async () => {
+    setLoading(true);
+    const { data, error } = await mockApi.getShops(searchQuery);
+    if (!error && data) {
+      setShops(data);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadShops();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   return (
     <div className="min-h-screen bg-background py-12 px-6">
@@ -78,63 +52,61 @@ const ShopList = ({ onShopSelect }) => {
         </div>
 
         {/* Shop Cards */}
-        <div className="grid md:grid-cols-2 gap-6">
-          {filteredShops.map((shop) => (
-            <Card key={shop.id} className="p-6 bg-card border-border hover:border-primary/50 transition-all duration-300">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-2xl font-bold mb-2">{shop.name}</h3>
-                  <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                    <MapPin className="w-4 h-4" />
-                    <span>{shop.address}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-primary text-primary" />
-                    <span className="font-semibold">{shop.rating}</span>
-                    <span className="text-muted-foreground ml-2">• {shop.distance}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-6 mb-4 py-4 px-4 bg-secondary/50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-primary" />
-                  <div>
-                    <div className="text-sm text-muted-foreground">Wait Time</div>
-                    <div className="font-bold">{shop.waitTime} min</div>
-                  </div>
-                </div>
-                <div className="h-8 w-px bg-border"></div>
-                <div>
-                  <div className="text-sm text-muted-foreground">In Queue</div>
-                  <div className="font-bold">{shop.queueLength} people</div>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <div className="text-sm text-muted-foreground mb-2">Services:</div>
-                <div className="flex flex-wrap gap-2">
-                  {shop.services.map((service) => (
-                    <span key={service} className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm">
-                      {service}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <Button 
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                onClick={() => onShopSelect(shop)}
-              >
-                Join Queue
-              </Button>
-            </Card>
-          ))}
-        </div>
-
-        {filteredShops.length === 0 && (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : shops.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-xl text-muted-foreground">No shops found matching your search.</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-6">
+            {shops.map((shop) => (
+              <Card key={shop.id} className="p-6 bg-card border-border hover:border-primary/50 transition-all duration-300">
+                <img 
+                  src={shop.image} 
+                  alt={shop.name}
+                  className="w-full h-48 object-cover rounded-lg mb-4"
+                />
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-2xl font-bold mb-2">{shop.name}</h3>
+                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                      <MapPin className="w-4 h-4" />
+                      <span>{shop.address}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-primary text-primary" />
+                      <span className="font-semibold">{shop.rating}</span>
+                      <span className="text-muted-foreground ml-2">• {shop.distance} miles</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-6 mb-4 py-4 px-4 bg-secondary/50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-primary" />
+                    <div>
+                      <div className="text-sm text-muted-foreground">Wait Time</div>
+                      <div className="font-bold">{shop.estimatedWait} min</div>
+                    </div>
+                  </div>
+                  <div className="h-8 w-px bg-border"></div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">In Queue</div>
+                    <div className="font-bold">{shop.currentQueue} people</div>
+                  </div>
+                </div>
+
+                <Button 
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                  onClick={() => onShopSelect(shop)}
+                >
+                  Join Queue
+                </Button>
+              </Card>
+            ))}
           </div>
         )}
       </div>

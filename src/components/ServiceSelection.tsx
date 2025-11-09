@@ -1,60 +1,57 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Clock, Scissors } from 'lucide-react';
-
-const mockServices = [
-  {
-    id: 1,
-    name: "Classic Haircut",
-    duration: 30,
-    price: "$25",
-    description: "Traditional haircut with styling"
-  },
-  {
-    id: 2,
-    name: "Haircut & Beard Trim",
-    duration: 45,
-    price: "$35",
-    description: "Complete haircut with beard shaping"
-  },
-  {
-    id: 3,
-    name: "Beard Trim Only",
-    duration: 20,
-    price: "$15",
-    description: "Professional beard trimming and shaping"
-  },
-  {
-    id: 4,
-    name: "Hot Towel Shave",
-    duration: 40,
-    price: "$30",
-    description: "Traditional straight razor shave with hot towels"
-  },
-  {
-    id: 5,
-    name: "Kids Haircut",
-    duration: 25,
-    price: "$20",
-    description: "Haircut for children under 12"
-  },
-  {
-    id: 6,
-    name: "Premium Package",
-    duration: 60,
-    price: "$50",
-    description: "Haircut, beard trim, hot towel treatment, and styling"
-  }
-];
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Clock, Scissors, Loader2 } from 'lucide-react';
+import { mockApi } from '@/services/mockApi';
+import { toast } from 'sonner';
 
 const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState(null);
+  const [customerName, setCustomerName] = useState('');
+  const [joining, setJoining] = useState(false);
 
-  const handleConfirm = () => {
-    if (selectedService) {
-      onServiceSelect(selectedService);
+  useEffect(() => {
+    loadServices();
+  }, [shop.id]);
+
+  const loadServices = async () => {
+    setLoading(true);
+    const { data, error } = await mockApi.getShopServices(shop.id);
+    if (!error && data) {
+      setServices(data);
     }
+    setLoading(false);
+  };
+
+  const handleJoinQueue = async () => {
+    if (!selectedService) {
+      toast.error('Please select a service');
+      return;
+    }
+    if (!customerName.trim()) {
+      toast.error('Please enter your name');
+      return;
+    }
+
+    setJoining(true);
+    const { data, error } = await mockApi.joinQueue(
+      shop.id,
+      selectedService.id,
+      customerName.trim()
+    );
+    setJoining(false);
+
+    if (error) {
+      toast.error(error);
+      return;
+    }
+
+    toast.success('Successfully joined the queue!');
+    onServiceSelect(selectedService, data);
   };
 
   return (
@@ -76,78 +73,101 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
         </div>
 
         {/* Service Cards */}
-        <div className="grid gap-4 mb-8">
-          {mockServices.map((service) => (
-            <Card 
-              key={service.id}
-              className={`p-6 cursor-pointer transition-all duration-300 ${
-                selectedService?.id === service.id 
-                  ? 'bg-primary/10 border-primary shadow-lg' 
-                  : 'bg-card border-border hover:border-primary/50'
-              }`}
-              onClick={() => setSelectedService(service)}
-            >
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      selectedService?.id === service.id 
-                        ? 'border-primary bg-primary' 
-                        : 'border-border'
-                    }`}>
-                      {selectedService?.id === service.id && (
-                        <div className="w-3 h-3 rounded-full bg-primary-foreground"></div>
-                      )}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-4 mb-8">
+              {services.map((service) => (
+                <Card 
+                  key={service.id}
+                  className={`p-6 cursor-pointer transition-all duration-300 ${
+                    selectedService?.id === service.id 
+                      ? 'bg-primary/10 border-primary shadow-lg' 
+                      : 'bg-card border-border hover:border-primary/50'
+                  }`}
+                  onClick={() => setSelectedService(service)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          selectedService?.id === service.id 
+                            ? 'border-primary bg-primary' 
+                            : 'border-border'
+                        }`}>
+                          {selectedService?.id === service.id && (
+                            <div className="w-3 h-3 rounded-full bg-primary-foreground"></div>
+                          )}
+                        </div>
+                        <h3 className="text-xl font-bold">{service.name}</h3>
+                      </div>
+                      
+                      <p className="text-muted-foreground mb-3 ml-9">{service.description}</p>
+                      
+                      <div className="flex items-center gap-6 ml-9">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Clock className="w-4 h-4" />
+                          <span>{service.duration} min</span>
+                        </div>
+                        <div className="text-primary font-bold text-lg">
+                          ${service.price}
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="text-xl font-bold">{service.name}</h3>
+                    
+                    <Scissors className={`w-6 h-6 ${
+                      selectedService?.id === service.id ? 'text-primary' : 'text-muted-foreground'
+                    }`} />
                   </div>
-                  
-                  <p className="text-muted-foreground mb-3 ml-9">{service.description}</p>
-                  
-                  <div className="flex items-center gap-6 ml-9">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Clock className="w-4 h-4" />
-                      <span>{service.duration} min</span>
-                    </div>
-                    <div className="text-primary font-bold text-lg">
-                      {service.price}
-                    </div>
-                  </div>
-                </div>
-                
-                <Scissors className={`w-6 h-6 ${
-                  selectedService?.id === service.id ? 'text-primary' : 'text-muted-foreground'
-                }`} />
-              </div>
-            </Card>
-          ))}
-        </div>
-
-        {/* Confirm Button */}
-        <div className="sticky bottom-6 bg-card border border-border rounded-lg p-6 shadow-lg">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <div className="text-sm text-muted-foreground">Current queue</div>
-              <div className="font-bold">{shop.queueLength} people waiting</div>
+                </Card>
+              ))}
             </div>
+
+            {/* Confirm Section */}
             {selectedService && (
-              <div className="text-right">
-                <div className="text-sm text-muted-foreground">Estimated wait</div>
-                <div className="font-bold text-primary">
-                  ~{shop.waitTime + selectedService.duration} min
+              <div className="sticky bottom-6 bg-card border border-border rounded-lg p-6 shadow-lg">
+                <div className="space-y-4">
+                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                    <p className="text-sm text-muted-foreground mb-1">Selected Service:</p>
+                    <p className="font-semibold text-lg">{selectedService.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Estimated wait: ~{shop.currentQueue * selectedService.duration} minutes
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="customerName">Your Name</Label>
+                    <Input
+                      id="customerName"
+                      placeholder="Enter your name"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      disabled={joining}
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleJoinQueue}
+                    className="w-full py-6 text-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+                    disabled={joining}
+                  >
+                    {joining ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Joining Queue...
+                      </>
+                    ) : (
+                      'Join Queue'
+                    )}
+                  </Button>
                 </div>
               </div>
             )}
-          </div>
-          
-          <Button 
-            className="w-full py-6 text-lg bg-primary hover:bg-primary/90 text-primary-foreground"
-            disabled={!selectedService}
-            onClick={handleConfirm}
-          >
-            {selectedService ? `Join Queue - ${selectedService.name}` : 'Select a service'}
-          </Button>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
