@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Scissors, Clock, QrCode, MapPin, Users, TrendingUp, LogIn, LayoutDashboard } from 'lucide-react';
 import heroImage from "@/assets/hero-barber.jpg";
 import ShopList from '@/components/customer/ShopList';
 import ServiceSelection from '@/components/customer/ServiceSelection';
 import QueueStatus from '@/components/customer/QueueStatus';
-import ActiveQueue from '@/components/customer/ActiveQueue';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 const Index = () => {
@@ -16,8 +13,6 @@ const Index = () => {
   const [selectedShop, setSelectedShop] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [queueData, setQueueData] = useState(null);
-  const [customerName, setCustomerName] = useState('');
-  const [showActiveQueue, setShowActiveQueue] = useState(false);
   const {
     user,
     isShopOwner,
@@ -25,15 +20,6 @@ const Index = () => {
     loading
   } = useAuth();
   const navigate = useNavigate();
-
-  // Load customer name from localStorage
-  useEffect(() => {
-    const savedName = localStorage.getItem('customerName');
-    if (savedName) {
-      setCustomerName(savedName);
-      setShowActiveQueue(true);
-    }
-  }, []);
 
   // Redirect shop owners to dashboard
   useEffect(() => {
@@ -54,23 +40,7 @@ const Index = () => {
     const name = queue.customer_name;
     if (name) {
       localStorage.setItem('customerName', name);
-      setCustomerName(name);
-      setShowActiveQueue(true);
     }
-  };
-
-  const handleNameSubmit = (e) => {
-    e.preventDefault();
-    if (customerName.trim()) {
-      localStorage.setItem('customerName', customerName.trim());
-      setShowActiveQueue(true);
-    }
-  };
-
-  const handleQueueCancelled = () => {
-    setShowActiveQueue(false);
-    localStorage.removeItem('customerName');
-    setCustomerName('');
   };
   const handleBackToShops = () => {
     setView('shops');
@@ -110,47 +80,14 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Active Queue Section */}
-      {showActiveQueue && customerName && (
-        <section className="pt-24 pb-8 px-6">
-          <div className="max-w-4xl mx-auto">
-            <ActiveQueue 
-              customerName={customerName} 
-              onQueueCancelled={handleQueueCancelled}
-            />
-          </div>
-        </section>
-      )}
-
       {/* Hero Section */}
-      <section className={`relative ${showActiveQueue ? 'min-h-[80vh]' : 'h-screen'} flex items-center justify-center overflow-hidden pt-16`}>
+      <section className="relative h-screen flex items-center justify-center overflow-hidden pt-16">
         <div className="absolute inset-0 z-0">
           <img src={heroImage} alt="Modern barber shop interior" className="w-full h-full object-cover opacity-40" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/50 to-background"></div>
         </div>
         
         <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
-          {!showActiveQueue && (
-            <Card className="p-6 mb-8 bg-card/95 backdrop-blur border-border max-w-md mx-auto">
-              <h3 className="text-xl font-bold mb-4">Check Your Queue Status</h3>
-              <form onSubmit={handleNameSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="checkName">Enter your name</Label>
-                  <Input
-                    id="checkName"
-                    placeholder="Your name"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    className="mt-2"
-                  />
-                </div>
-                <Button type="submit" className="w-full">
-                  Check Queue Status
-                </Button>
-              </form>
-            </Card>
-          )}
-
           <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
             <Scissors className="w-4 h-4 text-primary" />
             <span className="text-sm text-primary font-medium">Smart Queue Management</span>

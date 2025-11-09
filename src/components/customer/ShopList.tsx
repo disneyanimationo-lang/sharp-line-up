@@ -2,16 +2,27 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { MapPin, Star, Clock, Search, Loader2, ArrowLeft } from 'lucide-react';
 import { getShops } from '@/services/queueApi';
+import ActiveQueue from './ActiveQueue';
 
 const ShopList = ({ onShopSelect, onBack }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [customerName, setCustomerName] = useState('');
+  const [showActiveQueue, setShowActiveQueue] = useState(false);
 
   useEffect(() => {
     loadShops();
+    
+    // Load customer name from localStorage
+    const savedName = localStorage.getItem('customerName');
+    if (savedName) {
+      setCustomerName(savedName);
+      setShowActiveQueue(true);
+    }
   }, []);
 
   const loadShops = async () => {
@@ -30,6 +41,20 @@ const ShopList = ({ onShopSelect, onBack }) => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const handleNameSubmit = (e) => {
+    e.preventDefault();
+    if (customerName.trim()) {
+      localStorage.setItem('customerName', customerName.trim());
+      setShowActiveQueue(true);
+    }
+  };
+
+  const handleQueueCancelled = () => {
+    setShowActiveQueue(false);
+    localStorage.removeItem('customerName');
+    setCustomerName('');
+  };
+
   return (
     <div className="min-h-screen bg-background py-12 px-6">
       <div className="max-w-6xl mx-auto">
@@ -46,10 +71,42 @@ const ShopList = ({ onShopSelect, onBack }) => {
         )}
 
         {/* Header */}
-        <div className="mb-12">
+        <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Find A Barber</h1>
           <p className="text-xl text-muted-foreground">Browse nearby shops and check their queue status</p>
         </div>
+
+        {/* Active Queue Section */}
+        {showActiveQueue && customerName && (
+          <div className="mb-8">
+            <ActiveQueue 
+              customerName={customerName} 
+              onQueueCancelled={handleQueueCancelled}
+            />
+          </div>
+        )}
+
+        {/* Check Queue Status Form */}
+        {!showActiveQueue && (
+          <Card className="p-6 mb-8 bg-card border-border max-w-md">
+            <h3 className="text-lg font-bold mb-4">Check Your Queue Status</h3>
+            <form onSubmit={handleNameSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="checkName">Enter your name</Label>
+                <Input
+                  id="checkName"
+                  placeholder="Your name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Check Queue Status
+              </Button>
+            </form>
+          </Card>
+        )}
 
         {/* Search Bar */}
         <div className="mb-8 relative">
