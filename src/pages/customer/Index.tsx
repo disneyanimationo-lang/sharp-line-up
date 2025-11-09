@@ -1,25 +1,45 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Scissors, Clock, QrCode, MapPin, Users, TrendingUp, LogIn, LayoutDashboard } from 'lucide-react';
+import { Scissors, Clock, QrCode, MapPin, Users, TrendingUp, LogIn, LayoutDashboard, User, Settings, LogOut } from 'lucide-react';
 import heroImage from "@/assets/hero-barber.jpg";
 import ShopList from '@/components/customer/ShopList';
 import ServiceSelection from '@/components/customer/ServiceSelection';
 import QueueStatus from '@/components/customer/QueueStatus';
+import ProfileSettings from '@/components/customer/ProfileSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { supabase } from '@/integrations/supabase/client';
 const Index = () => {
-  const [view, setView] = useState('home'); // home, shops, service, queue
+  const [view, setView] = useState('home'); // home, shops, service, queue, profile
   const [selectedShop, setSelectedShop] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [queueData, setQueueData] = useState(null);
+  const [profile, setProfile] = useState<{ name: string; avatar_url: string | null } | null>(null);
   const {
     user,
     isShopOwner,
     userRole,
-    loading
+    loading,
+    signOut
   } = useAuth();
   const navigate = useNavigate();
+
+  // Load user profile
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('profiles')
+        .select('name, avatar_url')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data) setProfile(data);
+        });
+    }
+  }, [user]);
 
   // Redirect shop owners to dashboard
   useEffect(() => {
@@ -51,6 +71,9 @@ const Index = () => {
   if (view === 'queue' && queueData) {
     return <QueueStatus queueData={queueData} service={selectedService} shop={selectedShop} onBack={handleBackToShops} />;
   }
+  if (view === 'profile') {
+    return <ProfileSettings onBack={() => setView('home')} />;
+  }
   return <div className="min-h-screen bg-background">
       {/* Header Navigation */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border">
@@ -61,15 +84,43 @@ const Index = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            {user ? <>
-                {isShopOwner && <Button variant="default" onClick={() => navigate('/dashboard')}>
+            {user ? (
+              <>
+                {isShopOwner && (
+                  <Button variant="default" onClick={() => navigate('/dashboard')}>
                     <LayoutDashboard className="w-4 h-4 mr-2" />
                     Dashboard
-                  </Button>}
-              </> : <Button variant="default" onClick={() => navigate('/auth')}>
+                  </Button>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center gap-2">
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={profile?.avatar_url || undefined} />
+                        <AvatarFallback>{profile?.name?.charAt(0)?.toUpperCase() || 'U'}</AvatarFallback>
+                      </Avatar>
+                      <span className="hidden sm:inline">{profile?.name || 'User'}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onClick={() => setView('profile')}>
+                      <Settings className="w-4 h-4 mr-2" />
+                      Profile Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={signOut}>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <Button variant="default" onClick={() => navigate('/auth')}>
                 <LogIn className="w-4 h-4 mr-2" />
                 Sign In
-              </Button>}
+              </Button>
+            )}
           </div>
         </div>
       </header>
