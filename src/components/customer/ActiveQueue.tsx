@@ -115,13 +115,21 @@ const ActiveQueue = ({ customerName, onQueueCancelled }: ActiveQueueProps) => {
 
     setSaving(true);
     try {
+      console.log('Starting service update for queue:', queueData.id);
+      console.log('Selected service IDs:', selectedServiceIds);
+
       // Delete existing queue_services
-      const { error: deleteError } = await supabase
+      const { error: deleteError, count: deleteCount } = await supabase
         .from('queue_services')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('queue_id', queueData.id);
 
-      if (deleteError) throw deleteError;
+      console.log('Delete result:', { deleteError, deleteCount });
+
+      if (deleteError) {
+        console.error('Delete error:', deleteError);
+        throw deleteError;
+      }
 
       // Insert new queue_services
       const queueServices = selectedServiceIds.map(serviceId => ({
@@ -129,16 +137,26 @@ const ActiveQueue = ({ customerName, onQueueCancelled }: ActiveQueueProps) => {
         service_id: serviceId,
       }));
 
-      const { error: insertError } = await supabase
-        .from('queue_services')
-        .insert(queueServices);
+      console.log('Inserting queue services:', queueServices);
 
-      if (insertError) throw insertError;
+      const { error: insertError, data: insertData } = await supabase
+        .from('queue_services')
+        .insert(queueServices)
+        .select();
+
+      console.log('Insert result:', { insertError, insertData });
+
+      if (insertError) {
+        console.error('Insert error:', insertError);
+        throw insertError;
+      }
 
       // Calculate new estimated wait time
       const selectedServices = availableServices.filter(s => selectedServiceIds.includes(s.id));
       const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
       const newEstimatedWait = queueData.position * totalDuration;
+
+      console.log('Updating queue with estimated wait:', newEstimatedWait);
 
       // Update queue entry
       const { error: updateError } = await supabase
@@ -149,14 +167,28 @@ const ActiveQueue = ({ customerName, onQueueCancelled }: ActiveQueueProps) => {
         })
         .eq('id', queueData.id);
 
-      if (updateError) throw updateError;
+      console.log('Update result:', { updateError });
 
+      if (updateError) {
+        console.error('Update error:', updateError);
+        throw updateError;
+      }
+
+      console.log('Services updated successfully!');
       toast.success('Services updated successfully!');
       setIsEditing(false);
       await loadActiveQueue();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating services:', error);
-      toast.error('Failed to update services');
+      
+      // Provide more specific error messages
+      if (error.code === '23505') {
+        toast.error('Duplicate service detected. Please try again.');
+      } else if (error.code === '42501') {
+        toast.error('Permission denied. Please refresh and try again.');
+      } else {
+        toast.error(`Failed to update services: ${error.message || 'Unknown error'}`);
+      }
     } finally {
       setSaving(false);
     }
