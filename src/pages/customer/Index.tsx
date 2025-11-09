@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Scissors, Clock, QrCode, MapPin, Users, TrendingUp, LogIn, LayoutDashboard } from 'lucide-react';
 import heroImage from "@/assets/hero-barber.jpg";
-import ShopList from '@/components/ShopList';
-import ServiceSelection from '@/components/ServiceSelection';
-import QueueStatus from '@/components/QueueStatus';
+import ShopList from '@/components/customer/ShopList';
+import ServiceSelection from '@/components/customer/ServiceSelection';
+import QueueStatus from '@/components/customer/QueueStatus';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 

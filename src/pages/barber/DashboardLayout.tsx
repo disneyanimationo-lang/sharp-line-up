@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { DashboardSidebar } from '@/components/DashboardSidebar';
+import { DashboardSidebar } from '@/components/barber/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 
