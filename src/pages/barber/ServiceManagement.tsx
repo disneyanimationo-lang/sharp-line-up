@@ -35,6 +35,11 @@ const ServiceManagement = () => {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [editPrice, setEditPrice] = useState('');
   const [editDuration, setEditDuration] = useState('');
+  const [isCreatingService, setIsCreatingService] = useState(false);
+  const [newServiceName, setNewServiceName] = useState('');
+  const [newServiceDescription, setNewServiceDescription] = useState('');
+  const [newServiceDuration, setNewServiceDuration] = useState('');
+  const [newServicePrice, setNewServicePrice] = useState('');
 
   useEffect(() => {
     loadServices();
@@ -50,10 +55,11 @@ const ServiceManagement = () => {
       if (!shopOwnerData) return;
       setShopId(shopOwnerData.shop_id);
 
-      // Get all available services
+      // Get all available services (global + custom for this shop)
       const { data: services } = await supabase
         .from('services')
         .select('*')
+        .or(`shop_id.is.null,shop_id.eq.${shopOwnerData.shop_id}`)
         .order('name');
 
       // Get services offered by this shop with custom pricing
@@ -150,6 +156,68 @@ const ServiceManagement = () => {
     }
   };
 
+  const createCustomService = async () => {
+    if (!shopId || !newServiceName || !newServiceDuration || !newServicePrice) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    try {
+      // Create the custom service
+      const { data: newService, error: serviceError } = await supabase
+        .from('services')
+        .insert({
+          name: newServiceName,
+          description: newServiceDescription || `Custom ${newServiceName} service`,
+          duration: parseInt(newServiceDuration),
+          price: parseFloat(newServicePrice),
+          is_custom: true,
+          shop_id: shopId,
+        })
+        .select()
+        .single();
+
+      if (serviceError) throw serviceError;
+
+      // Automatically add it to shop_services
+      const { error: shopServiceError } = await supabase
+        .from('shop_services')
+        .insert({
+          shop_id: shopId,
+          service_id: newService.id,
+        });
+
+      if (shopServiceError) throw shopServiceError;
+
+      toast.success('Custom service created successfully');
+      setIsCreatingService(false);
+      setNewServiceName('');
+      setNewServiceDescription('');
+      setNewServiceDuration('');
+      setNewServicePrice('');
+      loadServices();
+    } catch (error) {
+      console.error('Error creating service:', error);
+      toast.error('Failed to create service');
+    }
+  };
+
+  const deleteCustomService = async (serviceId: string) => {
+    try {
+      const { error } = await supabase
+        .from('services')
+        .delete()
+        .eq('id', serviceId);
+
+      if (error) throw error;
+      toast.success('Custom service deleted successfully');
+      loadServices();
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      toast.error('Failed to delete service');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -160,16 +228,27 @@ const ServiceManagement = () => {
 
   return (
     <div>
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold mb-2">Service Management</h2>
-        <p className="text-muted-foreground">Manage the services your shop offers</p>
+      <div className="mb-8 flex justify-between items-start">
+        <div>
+          <h2 className="text-3xl font-bold mb-2">Service Management</h2>
+          <p className="text-muted-foreground">Manage the services your shop offers</p>
+        </div>
+        <Button onClick={() => setIsCreatingService(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Create Custom Service
+        </Button>
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {allServices.map((service) => (
           <Card key={service.id} className="p-6 bg-card border-border">
             <div className="flex justify-between items-start mb-3">
-              <h3 className="text-lg font-bold">{service.name}</h3>
+              <div>
+                <h3 className="text-lg font-bold">{service.name}</h3>
+                {(service as any).is_custom && (
+                  <Badge variant="outline" className="mt-1">Custom</Badge>
+                )}
+              </div>
               {service.isOffered && (
                 <Badge variant="default">Active</Badge>
               )}
@@ -217,10 +296,16 @@ const ServiceManagement = () => {
                   variant="destructive"
                   size="sm"
                   className="flex-1"
-                  onClick={() => removeService(service.id)}
+                  onClick={() => {
+                    if ((service as any).is_custom) {
+                      deleteCustomService(service.id);
+                    } else {
+                      removeService(service.id);
+                    }
+                  }}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Remove
+                  {(service as any).is_custom ? 'Delete' : 'Remove'}
                 </Button>
               </div>
             ) : (
@@ -283,6 +368,69 @@ const ServiceManagement = () => {
               Cancel
             </Button>
             <Button onClick={saveServiceEdit}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreatingService} onOpenChange={setIsCreatingService}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Custom Service</DialogTitle>
+            <DialogDescription>
+              Add a new service unique to your shop
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Service Name *</Label>
+              <Input
+                id="name"
+                value={newServiceName}
+                onChange={(e) => setNewServiceName(e.target.value)}
+                placeholder="e.g., Deluxe Spa Treatment"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                value={newServiceDescription}
+                onChange={(e) => setNewServiceDescription(e.target.value)}
+                placeholder="Brief description of the service"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="new-duration">Duration (minutes) *</Label>
+              <Input
+                id="new-duration"
+                type="number"
+                value={newServiceDuration}
+                onChange={(e) => setNewServiceDuration(e.target.value)}
+                placeholder="30"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="new-price">Price (₹) *</Label>
+              <Input
+                id="new-price"
+                type="number"
+                step="0.01"
+                value={newServicePrice}
+                onChange={(e) => setNewServicePrice(e.target.value)}
+                placeholder="25.00"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreatingService(false)}>
+              Cancel
+            </Button>
+            <Button onClick={createCustomService}>Create Service</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

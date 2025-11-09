@@ -140,26 +140,40 @@ export type Database = {
           description: string | null
           duration: number
           id: string
+          is_custom: boolean
           name: string
           price: number
+          shop_id: string | null
         }
         Insert: {
           created_at?: string | null
           description?: string | null
           duration: number
           id?: string
+          is_custom?: boolean
           name: string
           price: number
+          shop_id?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string | null
           duration?: number
           id?: string
+          is_custom?: boolean
           name?: string
           price?: number
+          shop_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "services_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shop_owners: {
         Row: {
