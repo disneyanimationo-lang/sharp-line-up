@@ -1,0 +1,140 @@
+import { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { Icon, LatLngExpression } from 'leaflet';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { MapPin, Star, Clock } from 'lucide-react';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default marker icons in webpack
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// @ts-ignore
+delete Icon.Default.prototype._getIconUrl;
+Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
+
+// Custom icon for user location
+const userLocationIcon = new Icon({
+  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4IiBmaWxsPSIjMzb4OEZGIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMyIvPjwvc3ZnPg==',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
+
+// Custom icon for shops
+const shopIcon = new Icon({
+  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTYgMEMxMC40NzcgMCA2IDQuNDc3IDYgMTBDNiAxNi4yNSAxNiAzMiAxNiAzMkMxNiAzMiAyNiAxNi4yNSAyNiAxMEMyNiA0LjQ3NyAyMS41MjMgMCAxNiAwWiIgZmlsbD0iI0VGNDQ0NCIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iMTAiIHI9IjQiIGZpbGw9IndoaXRlIi8+PC9zdmc+',
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -32],
+});
+
+// Component to center map on user location
+const MapCenterController = ({ center }: { center: LatLngExpression }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    map.setView(center, 13);
+  }, [center, map]);
+  
+  return null;
+};
+
+interface MapViewProps {
+  shops: any[];
+  userLocation: { latitude: number | null; longitude: number | null };
+  onShopSelect: (shop: any) => void;
+}
+
+const MapView = ({ shops, userLocation, onShopSelect }: MapViewProps) => {
+  // Default center (fallback if no user location)
+  const defaultCenter: LatLngExpression = [40.7128, -74.0060]; // New York
+  
+  const center: LatLngExpression = 
+    userLocation.latitude && userLocation.longitude
+      ? [userLocation.latitude, userLocation.longitude]
+      : defaultCenter;
+
+  return (
+    <div className="w-full h-[600px] rounded-lg overflow-hidden border border-border">
+      <MapContainer
+        center={center}
+        zoom={13}
+        className="w-full h-full"
+        scrollWheelZoom={true}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        
+        <MapCenterController center={center} />
+
+        {/* User location marker */}
+        {userLocation.latitude && userLocation.longitude && (
+          <Marker
+            position={[userLocation.latitude, userLocation.longitude]}
+            icon={userLocationIcon}
+          >
+            <Popup>
+              <div className="text-center font-semibold">Your Location</div>
+            </Popup>
+          </Marker>
+        )}
+
+        {/* Shop markers */}
+        {shops.map((shop) => {
+          if (!shop.latitude || !shop.longitude) return null;
+          
+          return (
+            <Marker
+              key={shop.id}
+              position={[shop.latitude, shop.longitude]}
+              icon={shopIcon}
+            >
+              <Popup>
+                <Card className="border-0 shadow-none p-2 min-w-[250px]">
+                  <h3 className="text-lg font-bold mb-2">{shop.name}</h3>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                    <MapPin className="w-3 h-3" />
+                    <span>{shop.address}</span>
+                  </div>
+                  <div className="flex items-center gap-1 mb-3">
+                    <Star className="w-3 h-3 fill-primary text-primary" />
+                    <span className="font-semibold text-sm">{shop.rating}</span>
+                    {shop.distance !== null && (
+                      <span className="text-muted-foreground text-sm ml-2">• {shop.distance} miles</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 mb-3 text-sm">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4 text-primary" />
+                      <span>{shop.estimated_wait || 0} min</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">{shop.currentQueue || 0} in queue</span>
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm"
+                    className="w-full"
+                    onClick={() => onShopSelect(shop)}
+                  >
+                    Join Queue
+                  </Button>
+                </Card>
+              </Popup>
+            </Marker>
+          );
+        })}
+      </MapContainer>
+    </div>
+  );
+};
+
+export default MapView;

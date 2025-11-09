@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { MapPin, Star, Clock, Search, Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
+import { MapPin, Star, Clock, Search, Loader2, ArrowLeft, AlertCircle, Map as MapIcon, List } from 'lucide-react';
 import { getShops } from '@/services/queueApi';
 import { getActiveQueue } from '@/services/activeQueueApi';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ActiveQueue from './ActiveQueue';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import MapView from './MapView';
 
 const ShopList = ({ onShopSelect, onBack }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,6 +20,7 @@ const ShopList = ({ onShopSelect, onBack }) => {
   const [loading, setLoading] = useState(true);
   const [customerName, setCustomerName] = useState('');
   const [showActiveQueue, setShowActiveQueue] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const { user } = useAuth();
   const navigate = useNavigate();
   const { latitude, longitude, loading: locationLoading, error: locationError } = useGeolocation();
@@ -119,19 +121,41 @@ const ShopList = ({ onShopSelect, onBack }) => {
           </div>
         )}
 
-        {/* Search Bar */}
-        <div className="mb-8 relative">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-          <Input
-            type="text"
-            placeholder="Search by name or location..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 py-6 text-lg bg-card border-border"
-          />
+        {/* Search Bar and View Toggle */}
+        <div className="mb-8 space-y-4">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <Input
+              type="text"
+              placeholder="Search by name or location..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 py-6 text-lg bg-card border-border"
+            />
+          </div>
+          
+          {/* View Mode Toggle */}
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              onClick={() => setViewMode('list')}
+              className="flex-1"
+            >
+              <List className="w-4 h-4 mr-2" />
+              List View
+            </Button>
+            <Button
+              variant={viewMode === 'map' ? 'default' : 'outline'}
+              onClick={() => setViewMode('map')}
+              className="flex-1"
+            >
+              <MapIcon className="w-4 h-4 mr-2" />
+              Map View
+            </Button>
+          </div>
         </div>
 
-        {/* Shop Cards */}
+        {/* Content Area */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -140,6 +164,12 @@ const ShopList = ({ onShopSelect, onBack }) => {
           <div className="text-center py-12">
             <p className="text-xl text-muted-foreground">No shops found matching your search.</p>
           </div>
+        ) : viewMode === 'map' ? (
+          <MapView 
+            shops={shops}
+            userLocation={{ latitude, longitude }}
+            onShopSelect={onShopSelect}
+          />
         ) : (
           <div className="grid md:grid-cols-2 gap-6">
             {shops.map((shop) => (
