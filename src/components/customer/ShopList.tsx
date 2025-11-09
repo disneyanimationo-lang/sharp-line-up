@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, Star, Clock, Search, Loader2, ArrowLeft } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { MapPin, Star, Clock, Search, Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
 import { getShops } from '@/services/queueApi';
 import { getActiveQueue } from '@/services/activeQueueApi';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ActiveQueue from './ActiveQueue';
+import { useGeolocation } from '@/hooks/useGeolocation';
 
 const ShopList = ({ onShopSelect, onBack }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,6 +21,7 @@ const ShopList = ({ onShopSelect, onBack }) => {
   const [showActiveQueue, setShowActiveQueue] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { latitude, longitude, loading: locationLoading, error: locationError } = useGeolocation();
 
   useEffect(() => {
     // Require authentication
@@ -54,7 +57,7 @@ const ShopList = ({ onShopSelect, onBack }) => {
 
   const loadShops = async () => {
     setLoading(true);
-    const { data, error } = await getShops(searchQuery);
+    const { data, error } = await getShops(searchQuery, latitude, longitude);
     if (!error && data) {
       setShops(data);
     }
@@ -62,11 +65,13 @@ const ShopList = ({ onShopSelect, onBack }) => {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      loadShops();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+    if (!locationLoading) {
+      const timer = setTimeout(() => {
+        loadShops();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [searchQuery, latitude, longitude, locationLoading]);
 
   const handleQueueCancelled = () => {
     setShowActiveQueue(false);
@@ -93,6 +98,16 @@ const ShopList = ({ onShopSelect, onBack }) => {
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Find A Barber</h1>
           <p className="text-xl text-muted-foreground">Browse nearby shops and check their queue status</p>
         </div>
+
+        {/* Location Status */}
+        {locationError && (
+          <Alert className="mb-6" variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {locationError} Showing shops with default distances.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Active Queue Section */}
         {showActiveQueue && customerName && (
@@ -139,7 +154,9 @@ const ShopList = ({ onShopSelect, onBack }) => {
                     <div className="flex items-center gap-1">
                       <Star className="w-4 h-4 fill-primary text-primary" />
                       <span className="font-semibold">{shop.rating}</span>
-                      <span className="text-muted-foreground ml-2">• {shop.distance} miles</span>
+                      {shop.distance !== null && (
+                        <span className="text-muted-foreground ml-2">• {shop.distance} miles</span>
+                      )}
                     </div>
                   </div>
                 </div>

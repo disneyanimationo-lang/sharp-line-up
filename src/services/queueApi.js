@@ -1,12 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// Get all shops with queue info
-export const getShops = async (searchQuery = '') => {
+// Get all shops with queue info and calculate distances
+export const getShops = async (searchQuery = '', userLat = null, userLng = null) => {
   try {
     let query = supabase
       .from('shops')
-      .select('*')
-      .order('distance');
+      .select('*');
 
     if (searchQuery) {
       query = query.or(`name.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`);
@@ -16,7 +15,7 @@ export const getShops = async (searchQuery = '') => {
     
     if (error) throw error;
 
-    // Get current queue counts for each shop
+    // Get current queue counts and calculate distances for each shop
     const shopsWithQueue = await Promise.all(
       data.map(async (shop) => {
         const { count } = await supabase
@@ -25,14 +24,36 @@ export const getShops = async (searchQuery = '') => {
           .eq('shop_id', shop.id)
           .eq('status', 'waiting');
 
+        // Calculate distance if user location and shop coordinates are available
+        let calculatedDistance = shop.distance;
+        if (userLat && userLng && shop.latitude && shop.longitude) {
+          const { data: distanceData } = await supabase.rpc('calculate_distance', {
+            lat1: userLat,
+            lon1: userLng,
+            lat2: shop.latitude,
+            lon2: shop.longitude
+          });
+          
+          // Convert km to miles and round to 1 decimal
+          calculatedDistance = distanceData ? Math.round(distanceData * 0.621371 * 10) / 10 : shop.distance;
+        }
+
         return {
           ...shop,
+          distance: calculatedDistance,
           currentQueue: count || 0,
         };
       })
     );
 
-    return { data: shopsWithQueue, error: null };
+    // Sort by distance
+    const sortedShops = shopsWithQueue.sort((a, b) => {
+      if (a.distance === null) return 1;
+      if (b.distance === null) return -1;
+      return a.distance - b.distance;
+    });
+
+    return { data: sortedShops, error: null };
   } catch (error) {
     console.error('Error fetching shops:', error);
     return { data: null, error: error.message };

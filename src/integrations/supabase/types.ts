@@ -253,6 +253,8 @@ export type Database = {
           estimated_wait: number | null
           id: string
           image: string | null
+          latitude: number | null
+          longitude: number | null
           name: string
           opening_hours: Json | null
           phone: string | null
@@ -269,6 +271,8 @@ export type Database = {
           estimated_wait?: number | null
           id?: string
           image?: string | null
+          latitude?: number | null
+          longitude?: number | null
           name: string
           opening_hours?: Json | null
           phone?: string | null
@@ -285,6 +289,8 @@ export type Database = {
           estimated_wait?: number | null
           id?: string
           image?: string | null
+          latitude?: number | null
+          longitude?: number | null
           name?: string
           opening_hours?: Json | null
           phone?: string | null
@@ -320,6 +326,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_distance: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
