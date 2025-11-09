@@ -95,7 +95,7 @@ const Dashboard = () => {
     },
     {
       title: "Today's Revenue",
-      value: `$${stats.totalRevenue.toFixed(2)}`,
+      value: `₹${stats.totalRevenue.toFixed(2)}`,
       icon: TrendingUp,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
