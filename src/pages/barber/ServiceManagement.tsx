@@ -132,7 +132,7 @@ const ServiceManagement = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Price:</span>
-                <span className="font-semibold text-primary">${service.price}</span>
+                <span className="font-semibold text-primary">₹{service.price}</span>
               </div>
             </div>
 

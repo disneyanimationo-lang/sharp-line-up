@@ -113,7 +113,7 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
                           <span>{service.duration} min</span>
                         </div>
                         <div className="text-primary font-bold text-lg">
-                          ${service.price}
+                          ₹{service.price}
                         </div>
                       </div>
                     </div>

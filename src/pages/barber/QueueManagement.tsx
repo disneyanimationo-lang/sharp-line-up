@@ -186,7 +186,7 @@ const QueueManagement = () => {
                   <div className="space-y-1 text-muted-foreground">
                     <p>Service: <span className="text-foreground font-semibold">{entry.services.name}</span></p>
                     <p>Duration: {entry.services.duration} min</p>
-                    <p>Price: ${entry.services.price}</p>
+                    <p>Price: ₹{entry.services.price}</p>
                     <p>Wait Time: ~{entry.estimated_wait} min</p>
                     <p className="text-sm">Joined: {new Date(entry.joined_at).toLocaleTimeString()}</p>
                   </div>

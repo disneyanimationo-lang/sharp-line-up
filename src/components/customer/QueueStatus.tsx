@@ -130,7 +130,7 @@ const QueueStatus = ({ queueData, service, shop, onBack }) => {
               <div className="text-muted-foreground">{service.description}</div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-primary">${service.price}</div>
+              <div className="text-2xl font-bold text-primary">₹{service.price}</div>
               <div className="text-sm text-muted-foreground">{service.duration} min</div>
             </div>
           </div>
