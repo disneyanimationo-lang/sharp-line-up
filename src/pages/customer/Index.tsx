@@ -43,7 +43,7 @@ const Index = () => {
     setQueueData(null);
   };
   if (view === 'shops') {
-    return <ShopList onShopSelect={handleShopSelect} />;
+    return <ShopList onShopSelect={handleShopSelect} onBack={() => setView('home')} />;
   }
   if (view === 'service' && selectedShop) {
     return <ServiceSelection shop={selectedShop} onServiceSelect={handleServiceSelect} onBack={handleBackToShops} />;
