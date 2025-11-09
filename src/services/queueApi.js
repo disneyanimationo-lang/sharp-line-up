@@ -175,3 +175,22 @@ export const cancelQueue = async (queueId) => {
     return { data: null, error: error.message };
   }
 };
+
+// Submit rating for completed service
+export const submitRating = async (queueId, rating, reviewText = '') => {
+  try {
+    const { error } = await supabase
+      .from('queues')
+      .update({ 
+        rating,
+        review_text: reviewText
+      })
+      .eq('id', queueId);
+
+    if (error) throw error;
+    return { data: { success: true }, error: null };
+  } catch (error) {
+    console.error('Error submitting rating:', error);
+    return { data: null, error: error.message };
+  }
+};

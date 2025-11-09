@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Clock, Users, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Clock, Users, CheckCircle, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import RatingDialog from './RatingDialog';
 
 const QueueStatus = ({ queueData, service, shop, onBack }) => {
   const [currentPosition, setCurrentPosition] = useState(queueData?.position || 1);
   const [estimatedWait, setEstimatedWait] = useState(queueData?.estimatedWait || 30);
+  const [queueStatus, setQueueStatus] = useState(queueData?.status || 'waiting');
+  const [hasRated, setHasRated] = useState(!!queueData?.rating);
+  const [showRatingDialog, setShowRatingDialog] = useState(false);
 
   useEffect(() => {
     if (!queueData?.id) return;
@@ -27,9 +31,15 @@ const QueueStatus = ({ queueData, service, shop, onBack }) => {
           const updatedQueue = payload.new;
           setCurrentPosition(updatedQueue.position);
           setEstimatedWait(updatedQueue.estimated_wait);
+          setQueueStatus(updatedQueue.status);
           
-          if (updatedQueue.position === 1) {
+          if (updatedQueue.position === 1 && updatedQueue.status === 'waiting') {
             toast.success("You're next! Please head to the shop.");
+          }
+          
+          if (updatedQueue.status === 'completed' && !hasRated) {
+            toast.success('Service completed! Please rate your experience.');
+            setShowRatingDialog(true);
           }
         }
       )
@@ -38,7 +48,7 @@ const QueueStatus = ({ queueData, service, shop, onBack }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queueData?.id]);
+  }, [queueData?.id, hasRated]);
 
   const getStatusMessage = () => {
     if (currentPosition === 1) {
@@ -143,6 +153,49 @@ const QueueStatus = ({ queueData, service, shop, onBack }) => {
             Enable Notifications
           </Button>
         </div>
+
+        {/* Rating Dialog */}
+        {queueStatus === 'completed' && (
+          <>
+            {!hasRated && (
+              <Card className="mt-6 p-6 bg-primary/10 border-primary">
+                <div className="text-center">
+                  <Star className="w-12 h-12 text-primary mx-auto mb-3" />
+                  <h3 className="text-xl font-bold mb-2">Service Completed!</h3>
+                  <p className="text-muted-foreground mb-4">
+                    How was your experience? Your feedback helps us improve.
+                  </p>
+                  <Button 
+                    onClick={() => setShowRatingDialog(true)}
+                    size="lg"
+                  >
+                    Rate Your Experience
+                  </Button>
+                </div>
+              </Card>
+            )}
+            
+            {hasRated && (
+              <Card className="mt-6 p-6 bg-secondary/30 border-border">
+                <div className="text-center">
+                  <CheckCircle className="w-12 h-12 text-primary mx-auto mb-3" />
+                  <h3 className="text-xl font-bold mb-2">Thank You!</h3>
+                  <p className="text-muted-foreground">
+                    Your feedback has been submitted.
+                  </p>
+                </div>
+              </Card>
+            )}
+          </>
+        )}
+
+        <RatingDialog
+          open={showRatingDialog}
+          onOpenChange={setShowRatingDialog}
+          queueId={queueData.id}
+          shopName={shop.name}
+          onRatingSubmitted={() => setHasRated(true)}
+        />
       </div>
     </div>
   );

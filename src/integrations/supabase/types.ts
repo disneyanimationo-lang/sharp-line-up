@@ -22,6 +22,8 @@ export type Database = {
           id: string
           joined_at: string | null
           position: number
+          rating: number | null
+          review_text: string | null
           service_id: string
           shop_id: string
           status: string | null
@@ -34,6 +36,8 @@ export type Database = {
           id?: string
           joined_at?: string | null
           position: number
+          rating?: number | null
+          review_text?: string | null
           service_id: string
           shop_id: string
           status?: string | null
@@ -46,6 +50,8 @@ export type Database = {
           id?: string
           joined_at?: string | null
           position?: number
+          rating?: number | null
+          review_text?: string | null
           service_id?: string
           shop_id?: string
           status?: string | null
