@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, Users, CheckCircle } from 'lucide-react';
-import { mockApi } from '@/services/mockApi';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const QueueStatus = ({ queueData, service, shop, onBack }) => {
@@ -12,19 +12,32 @@ const QueueStatus = ({ queueData, service, shop, onBack }) => {
   useEffect(() => {
     if (!queueData?.id) return;
 
-    const interval = setInterval(async () => {
-      const { data, error } = await mockApi.getQueueStatus(queueData.id);
-      if (!error && data) {
-        setCurrentPosition(data.position);
-        setEstimatedWait(data.estimatedWait);
-        
-        if (data.position === 1) {
-          toast.success("You're next! Please head to the shop.");
+    // Subscribe to real-time updates for this queue entry
+    const channel = supabase
+      .channel('queue-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'queues',
+          filter: `id=eq.${queueData.id}`
+        },
+        (payload) => {
+          const updatedQueue = payload.new;
+          setCurrentPosition(updatedQueue.position);
+          setEstimatedWait(updatedQueue.estimated_wait);
+          
+          if (updatedQueue.position === 1) {
+            toast.success("You're next! Please head to the shop.");
+          }
         }
-      }
-    }, 15000); // Poll every 15 seconds
+      )
+      .subscribe();
 
-    return () => clearInterval(interval);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [queueData?.id]);
 
   const getStatusMessage = () => {

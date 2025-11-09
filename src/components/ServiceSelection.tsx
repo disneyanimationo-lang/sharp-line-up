@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Clock, Scissors, Loader2 } from 'lucide-react';
-import { mockApi } from '@/services/mockApi';
+import { getShopServices, joinQueue } from '@/services/queueApi';
 import { toast } from 'sonner';
 
 const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
@@ -20,7 +20,7 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
 
   const loadServices = async () => {
     setLoading(true);
-    const { data, error } = await mockApi.getShopServices(shop.id);
+    const { data, error } = await getShopServices(shop.id);
     if (!error && data) {
       setServices(data);
     }
@@ -38,7 +38,7 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
     }
 
     setJoining(true);
-    const { data, error } = await mockApi.joinQueue(
+    const { data, error } = await joinQueue(
       shop.id,
       selectedService.id,
       customerName.trim()

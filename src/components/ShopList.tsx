@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, Star, Clock, Search, Loader2 } from 'lucide-react';
-import { mockApi } from '@/services/mockApi';
+import { getShops } from '@/services/queueApi';
 
 const ShopList = ({ onShopSelect }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -16,7 +16,7 @@ const ShopList = ({ onShopSelect }) => {
 
   const loadShops = async () => {
     setLoading(true);
-    const { data, error } = await mockApi.getShops(searchQuery);
+    const { data, error } = await getShops(searchQuery);
     if (!error && data) {
       setShops(data);
     }
@@ -89,13 +89,13 @@ const ShopList = ({ onShopSelect }) => {
                     <Clock className="w-5 h-5 text-primary" />
                     <div>
                       <div className="text-sm text-muted-foreground">Wait Time</div>
-                      <div className="font-bold">{shop.estimatedWait} min</div>
+                      <div className="font-bold">{shop.estimated_wait || 0} min</div>
                     </div>
                   </div>
                   <div className="h-8 w-px bg-border"></div>
                   <div>
                     <div className="text-sm text-muted-foreground">In Queue</div>
-                    <div className="font-bold">{shop.currentQueue} people</div>
+                    <div className="font-bold">{shop.currentQueue || 0} people</div>
                   </div>
                 </div>
 
