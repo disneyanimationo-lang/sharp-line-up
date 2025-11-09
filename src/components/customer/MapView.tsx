@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import { Icon, LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 // Fix for default marker icons in webpack
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -58,6 +61,7 @@ function MapContent({ shops, userLocation, onShopSelect }: {
 }) {
   return (
     <>
+      {/* User location marker - outside cluster */}
       {userLocation.latitude && userLocation.longitude && (
         <Marker
           position={[userLocation.latitude, userLocation.longitude]}
@@ -69,44 +73,53 @@ function MapContent({ shops, userLocation, onShopSelect }: {
         </Marker>
       )}
 
-      {shops.filter(shop => shop.latitude && shop.longitude).map((shop) => (
-        <Marker
-          key={shop.id}
-          position={[shop.latitude, shop.longitude]}
-          icon={shopIcon}
-        >
-          <Popup>
-            <div style={{ minWidth: 220 }}>
-              <div style={{ fontWeight: 700, marginBottom: 6 }}>{shop.name}</div>
-              <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', marginBottom: 6 }}>
-                {shop.address}
+      {/* Shop markers - clustered */}
+      <MarkerClusterGroup
+        chunkedLoading
+        maxClusterRadius={60}
+        spiderfyOnMaxZoom={true}
+        showCoverageOnHover={false}
+        zoomToBoundsOnClick={true}
+      >
+        {shops.filter(shop => shop.latitude && shop.longitude).map((shop) => (
+          <Marker
+            key={shop.id}
+            position={[shop.latitude, shop.longitude]}
+            icon={shopIcon}
+          >
+            <Popup>
+              <div style={{ minWidth: 220 }}>
+                <div style={{ fontWeight: 700, marginBottom: 6 }}>{shop.name}</div>
+                <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', marginBottom: 6 }}>
+                  {shop.address}
+                </div>
+                <div style={{ display: 'flex', gap: 8, fontSize: 12, marginBottom: 8 }}>
+                  <div>⭐ {shop.rating}</div>
+                  {shop.distance !== null && <div>• {shop.distance} miles</div>}
+                </div>
+                <div style={{ display: 'flex', gap: 12, fontSize: 12, marginBottom: 10 }}>
+                  <div>Wait: {shop.estimated_wait || 0} min</div>
+                  <div>In queue: {shop.currentQueue || 0}</div>
+                </div>
+                <button
+                  onClick={() => onShopSelect(shop)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 8,
+                    background: 'hsl(var(--primary))',
+                    color: 'hsl(var(--primary-foreground))',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Join Queue
+                </button>
               </div>
-              <div style={{ display: 'flex', gap: 8, fontSize: 12, marginBottom: 8 }}>
-                <div>⭐ {shop.rating}</div>
-                {shop.distance !== null && <div>• {shop.distance} miles</div>}
-              </div>
-              <div style={{ display: 'flex', gap: 12, fontSize: 12, marginBottom: 10 }}>
-                <div>Wait: {shop.estimated_wait || 0} min</div>
-                <div>In queue: {shop.currentQueue || 0}</div>
-              </div>
-              <button
-                onClick={() => onShopSelect(shop)}
-                style={{
-                  width: '100%',
-                  padding: '8px 10px',
-                  borderRadius: 8,
-                  background: 'hsl(var(--primary))',
-                  color: 'hsl(var(--primary-foreground))',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                Join Queue
-              </button>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+            </Popup>
+          </Marker>
+        ))}
+      </MarkerClusterGroup>
     </>
   );
 }
