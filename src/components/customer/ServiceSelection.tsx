@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Clock, Scissors, Loader2 } from 'lucide-react';
 import { getShopServices, joinQueue } from '@/services/queueApi';
+import { getActiveQueue } from '@/services/activeQueueApi';
 import { toast } from 'sonner';
 import ShopReviews from './ShopReviews';
+import QueueRestrictionBanner from './QueueRestrictionBanner';
 
 const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
   const [services, setServices] = useState([]);
@@ -14,10 +16,22 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
   const [selectedServices, setSelectedServices] = useState([]);
   const [customerName, setCustomerName] = useState('');
   const [joining, setJoining] = useState(false);
+  const [existingQueue, setExistingQueue] = useState(null);
 
   useEffect(() => {
     loadServices();
+    checkExistingQueue();
   }, [shop.id]);
+
+  const checkExistingQueue = async () => {
+    const savedName = localStorage.getItem('customerName');
+    if (savedName) {
+      const { data } = await getActiveQueue(savedName);
+      if (data && data.shop_id !== shop.id) {
+        setExistingQueue(data);
+      }
+    }
+  };
 
   const loadServices = async () => {
     setLoading(true);
@@ -67,7 +81,14 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
     setJoining(false);
 
     if (error) {
-      toast.error(error);
+      // Show more detailed error for existing queue
+      if (error.includes('already have an active queue')) {
+        toast.error(error, {
+          duration: 5000,
+        });
+      } else {
+        toast.error(error);
+      }
       return;
     }
 
@@ -92,6 +113,11 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
           <h1 className="text-4xl font-bold mb-2">{shop.name}</h1>
           <p className="text-xl text-muted-foreground">Select a service to join the queue</p>
         </div>
+
+        {/* Queue Restriction Warning */}
+        {existingQueue && (
+          <QueueRestrictionBanner shopName={existingQueue.shops?.name || 'another shop'} />
+        )}
 
         {/* Reviews Section */}
         <div className="mb-8">
@@ -196,13 +222,15 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
                   <Button
                     onClick={handleJoinQueue}
                     className="w-full py-6 text-lg bg-primary hover:bg-primary/90 text-primary-foreground"
-                    disabled={joining}
+                    disabled={joining || !!existingQueue}
                   >
                     {joining ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Joining Queue...
                       </>
+                    ) : existingQueue ? (
+                      'Already in Another Queue'
                     ) : (
                       'Join Queue'
                     )}

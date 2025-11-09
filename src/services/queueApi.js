@@ -103,19 +103,20 @@ export const getShopServices = async (shopId) => {
 // Join queue with multiple services
 export const joinQueue = async (shopId, serviceIds, customerName) => {
   try {
-    // Check if customer already has an active queue entry
+    // Check if customer already has an active queue entry in ANY shop
     const { data: existingQueue } = await supabase
       .from('queues')
-      .select('id')
+      .select('id, shop_id, shops(name)')
       .eq('customer_name', customerName)
       .in('status', ['waiting', 'in_progress'])
       .limit(1)
       .maybeSingle();
 
     if (existingQueue) {
+      const shopName = existingQueue.shops?.name || 'another shop';
       return { 
         data: null, 
-        error: 'You already have an active queue entry. Please complete or cancel it first.' 
+        error: `You already have an active queue at ${shopName}. Please complete or cancel it before joining another queue.` 
       };
     }
 
