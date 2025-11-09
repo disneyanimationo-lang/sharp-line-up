@@ -1,9 +1,6 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Icon, LatLngExpression } from 'leaflet';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { MapPin, Star, Clock } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icons in webpack
@@ -34,6 +31,14 @@ const shopIcon = new Icon({
   popupAnchor: [0, -32],
 });
 
+// Client-only wrapper to avoid SSR/hydration mismatches
+function ClientOnly({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return <>{children}</>;
+}
+
 // Component to center map on user location
 function MapCenterController({ center }: { center: LatLngExpression }) {
   const map = useMap();
@@ -59,7 +64,7 @@ function MapContent({ shops, userLocation, onShopSelect }: {
           icon={userLocationIcon}
         >
           <Popup>
-            <div className="text-center font-semibold">Your Location</div>
+            <div style={{ fontWeight: 600 }}>Your Location</div>
           </Popup>
         </Marker>
       )}
@@ -71,36 +76,34 @@ function MapContent({ shops, userLocation, onShopSelect }: {
           icon={shopIcon}
         >
           <Popup>
-            <Card className="border-0 shadow-none p-2 min-w-[250px]">
-              <h3 className="text-lg font-bold mb-2">{shop.name}</h3>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                <MapPin className="w-3 h-3" />
-                <span>{shop.address}</span>
+            <div style={{ minWidth: 220 }}>
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>{shop.name}</div>
+              <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', marginBottom: 6 }}>
+                {shop.address}
               </div>
-              <div className="flex items-center gap-1 mb-3">
-                <Star className="w-3 h-3 fill-primary text-primary" />
-                <span className="font-semibold text-sm">{shop.rating}</span>
-                {shop.distance !== null && (
-                  <span className="text-muted-foreground text-sm ml-2">• {shop.distance} miles</span>
-                )}
+              <div style={{ display: 'flex', gap: 8, fontSize: 12, marginBottom: 8 }}>
+                <div>⭐ {shop.rating}</div>
+                {shop.distance !== null && <div>• {shop.distance} miles</div>}
               </div>
-              <div className="flex items-center gap-4 mb-3 text-sm">
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4 text-primary" />
-                  <span>{shop.estimated_wait || 0} min</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{shop.currentQueue || 0} in queue</span>
-                </div>
+              <div style={{ display: 'flex', gap: 12, fontSize: 12, marginBottom: 10 }}>
+                <div>Wait: {shop.estimated_wait || 0} min</div>
+                <div>In queue: {shop.currentQueue || 0}</div>
               </div>
-              <Button 
-                size="sm"
-                className="w-full"
+              <button
                 onClick={() => onShopSelect(shop)}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  borderRadius: 8,
+                  background: 'hsl(var(--primary))',
+                  color: 'hsl(var(--primary-foreground))',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
               >
                 Join Queue
-              </Button>
-            </Card>
+              </button>
+            </div>
           </Popup>
         </Marker>
       ))}
@@ -127,19 +130,21 @@ const MapView = ({ shops, userLocation, onShopSelect }: MapViewProps) => {
 
   return (
     <div className="w-full h-[600px] rounded-lg overflow-hidden border border-border">
-      <MapContainer
-        center={center}
-        zoom={13}
-        className="w-full h-full"
-        scrollWheelZoom={true}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <MapCenterController center={center} />
-        <MapContent shops={shops} userLocation={userLocation} onShopSelect={onShopSelect} />
-      </MapContainer>
+      <ClientOnly>
+        <MapContainer
+          center={center}
+          zoom={13}
+          className="w-full h-full"
+          scrollWheelZoom={true}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <MapCenterController center={center} />
+          <MapContent shops={shops} userLocation={userLocation} onShopSelect={onShopSelect} />
+        </MapContainer>
+      </ClientOnly>
     </div>
   );
 };
