@@ -34,9 +34,22 @@ const Index = () => {
         .from('profiles')
         .select('name, avatar_url')
         .eq('id', user.id)
-        .single()
-        .then(({ data }) => {
-          if (data) setProfile(data);
+        .maybeSingle()
+        .then(async ({ data, error }) => {
+          if (data) {
+            setProfile(data);
+          } else if (!error) {
+            // Create profile if it doesn't exist
+            const { data: newProfile } = await supabase
+              .from('profiles')
+              .insert({ id: user.id, name: user.email?.split('@')[0] || 'User' })
+              .select('name, avatar_url')
+              .single();
+            
+            if (newProfile) {
+              setProfile(newProfile);
+            }
+          }
         });
     }
   }, [user]);

@@ -26,11 +26,23 @@ const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
         .from('profiles')
         .select('name, avatar_url')
         .eq('id', user.id)
-        .single()
-        .then(({ data }) => {
+        .maybeSingle()
+        .then(async ({ data, error }) => {
           if (data) {
             setName(data.name || '');
             setAvatarUrl(data.avatar_url || '');
+          } else if (!error) {
+            // Create profile if it doesn't exist
+            const { data: newProfile } = await supabase
+              .from('profiles')
+              .insert({ id: user.id, name: user.email?.split('@')[0] || 'User' })
+              .select('name, avatar_url')
+              .single();
+            
+            if (newProfile) {
+              setName(newProfile.name || '');
+              setAvatarUrl(newProfile.avatar_url || '');
+            }
           }
         });
     }
