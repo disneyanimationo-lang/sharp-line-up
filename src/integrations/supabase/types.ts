@@ -192,16 +192,22 @@ export type Database = {
       }
       shop_services: {
         Row: {
+          custom_duration: number | null
+          custom_price: number | null
           id: string
           service_id: string
           shop_id: string
         }
         Insert: {
+          custom_duration?: number | null
+          custom_price?: number | null
           id?: string
           service_id: string
           shop_id: string
         }
         Update: {
+          custom_duration?: number | null
+          custom_price?: number | null
           id?: string
           service_id?: string
           shop_id?: string
