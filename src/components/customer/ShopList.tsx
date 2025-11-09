@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, Star, Clock, Search, Loader2 } from 'lucide-react';
+import { MapPin, Star, Clock, Search, Loader2, ArrowLeft } from 'lucide-react';
 import { getShops } from '@/services/queueApi';
 
 const ShopList = ({ onShopSelect }) => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +35,16 @@ const ShopList = ({ onShopSelect }) => {
   return (
     <div className="min-h-screen bg-background py-12 px-6">
       <div className="max-w-6xl mx-auto">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-6"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Find A Barber</h1>
