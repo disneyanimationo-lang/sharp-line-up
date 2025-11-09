@@ -129,11 +129,6 @@ const ShopList = ({ onShopSelect, onBack }) => {
           <div className="grid md:grid-cols-2 gap-6">
             {shops.map((shop) => (
               <Card key={shop.id} className="p-6 bg-card border-border hover:border-primary/50 transition-all duration-300">
-                <img 
-                  src={shop.image} 
-                  alt={shop.name}
-                  className="w-full h-48 object-cover rounded-lg mb-4"
-                />
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-2xl font-bold mb-2">{shop.name}</h3>
