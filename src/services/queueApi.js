@@ -101,7 +101,7 @@ export const getShopServices = async (shopId) => {
 };
 
 // Join queue with multiple services
-export const joinQueue = async (shopId, serviceIds, customerName) => {
+export const joinQueue = async (shopId, serviceIds, customerName, userId = null) => {
   try {
     // Check if customer already has an active queue entry in ANY shop
     const { data: existingQueue } = await supabase
@@ -145,6 +145,7 @@ export const joinQueue = async (shopId, serviceIds, customerName) => {
         shop_id: shopId,
         service_id: serviceIds[0],
         customer_name: customerName,
+        user_id: userId,
         position,
         estimated_wait: estimatedWait,
         status: 'waiting'

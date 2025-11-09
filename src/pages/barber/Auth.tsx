@@ -20,7 +20,8 @@ const Auth = () => {
     email: '', 
     password: '', 
     confirmPassword: '', 
-    role: 'customer' as 'customer' | 'shop_owner' 
+    role: 'customer' as 'customer' | 'shop_owner',
+    name: ''
   });
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -52,8 +53,13 @@ const Auth = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!signupData.email || !signupData.password || !signupData.confirmPassword) {
+    if (!signupData.email || !signupData.password || !signupData.confirmPassword || !signupData.name) {
       toast.error('Please fill in all fields');
+      return;
+    }
+
+    if (!signupData.name.trim()) {
+      toast.error('Please enter your name');
       return;
     }
 
@@ -68,7 +74,7 @@ const Auth = () => {
     }
 
     setLoading(true);
-    const { error } = await signUp(signupData.email, signupData.password, signupData.role);
+    const { error } = await signUp(signupData.email, signupData.password, signupData.role, signupData.name.trim());
     setLoading(false);
 
     if (error) {
@@ -182,6 +188,18 @@ const Auth = () => {
                       </Label>
                     </div>
                   </RadioGroup>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name">Full Name</Label>
+                  <Input
+                    id="signup-name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={signupData.name}
+                    onChange={(e) => setSignupData({ ...signupData, name: e.target.value })}
+                    disabled={loading}
+                  />
                 </div>
 
                 <div className="space-y-2">

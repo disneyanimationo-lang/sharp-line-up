@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ArrowLeft, Clock, Scissors, Loader2 } from 'lucide-react';
 import { getShopServices, joinQueue } from '@/services/queueApi';
 import { getActiveQueue } from '@/services/activeQueueApi';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ShopReviews from './ShopReviews';
 import QueueRestrictionBanner from './QueueRestrictionBanner';
@@ -17,18 +18,49 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
   const [customerName, setCustomerName] = useState('');
   const [joining, setJoining] = useState(false);
   const [existingQueue, setExistingQueue] = useState(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Require authentication
+    if (!user) {
+      toast.error('Please sign in to join a queue');
+      navigate('/auth');
+      return;
+    }
+    
     loadServices();
+    loadUserProfile();
     checkExistingQueue();
-  }, [shop.id]);
+  }, [shop.id, user]);
+
+  const loadUserProfile = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', user.id)
+      .single();
+    
+    if (data) {
+      setCustomerName(data.name);
+    }
+  };
 
   const checkExistingQueue = async () => {
-    const savedName = localStorage.getItem('customerName');
-    if (savedName) {
-      const { data } = await getActiveQueue(savedName);
-      if (data && data.shop_id !== shop.id) {
-        setExistingQueue(data);
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', user.id)
+      .single();
+    
+    if (data?.name) {
+      const { data: queueData } = await getActiveQueue(data.name);
+      if (queueData && queueData.shop_id !== shop.id) {
+        setExistingQueue(queueData);
       }
     }
   };
@@ -62,12 +94,19 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
   };
 
   const handleJoinQueue = async () => {
+    if (!user) {
+      toast.error('Please sign in to join a queue');
+      navigate('/auth');
+      return;
+    }
+
     if (selectedServices.length === 0) {
       toast.error('Please select at least one service');
       return;
     }
+
     if (!customerName.trim()) {
-      toast.error('Please enter your name');
+      toast.error('Unable to load your profile. Please try again.');
       return;
     }
 
@@ -76,7 +115,8 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
     const { data, error } = await joinQueue(
       shop.id,
       serviceIds,
-      customerName.trim()
+      customerName.trim(),
+      user.id
     );
     setJoining(false);
 
@@ -206,17 +246,6 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
                         <p className="text-2xl font-bold text-primary">₹{getTotalPrice()}</p>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="customerName">Your Name</Label>
-                    <Input
-                      id="customerName"
-                      placeholder="Enter your name"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      disabled={joining}
-                    />
                   </div>
 
                   <Button

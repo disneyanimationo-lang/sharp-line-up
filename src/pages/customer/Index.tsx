@@ -35,12 +35,6 @@ const Index = () => {
     setSelectedService(service);
     setQueueData(queue);
     setView('queue');
-    
-    // Save customer name to localStorage for active queue tracking
-    const name = queue.customer_name;
-    if (name) {
-      localStorage.setItem('customerName', name);
-    }
   };
   const handleBackToShops = () => {
     setView('shops');

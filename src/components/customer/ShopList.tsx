@@ -2,9 +2,13 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { MapPin, Star, Clock, Search, Loader2, ArrowLeft } from 'lucide-react';
 import { getShops } from '@/services/queueApi';
+import { getActiveQueue } from '@/services/activeQueueApi';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import ActiveQueue from './ActiveQueue';
 
 const ShopList = ({ onShopSelect, onBack }) => {
@@ -13,17 +17,40 @@ const ShopList = ({ onShopSelect, onBack }) => {
   const [loading, setLoading] = useState(true);
   const [customerName, setCustomerName] = useState('');
   const [showActiveQueue, setShowActiveQueue] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    loadShops();
-    
-    // Load customer name from localStorage
-    const savedName = localStorage.getItem('customerName');
-    if (savedName) {
-      setCustomerName(savedName);
-      setShowActiveQueue(true);
+    // Require authentication
+    if (!user) {
+      toast.error('Please sign in to browse shops');
+      navigate('/auth');
+      return;
     }
-  }, []);
+
+    loadShops();
+    loadUserProfile();
+  }, [user]);
+
+  const loadUserProfile = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', user.id)
+      .single();
+    
+    if (data?.name) {
+      setCustomerName(data.name);
+      
+      // Check if user has an active queue
+      const { data: queueData } = await getActiveQueue(data.name);
+      if (queueData) {
+        setShowActiveQueue(true);
+      }
+    }
+  };
 
   const loadShops = async () => {
     setLoading(true);
@@ -41,18 +68,9 @@ const ShopList = ({ onShopSelect, onBack }) => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const handleNameSubmit = (e) => {
-    e.preventDefault();
-    if (customerName.trim()) {
-      localStorage.setItem('customerName', customerName.trim());
-      setShowActiveQueue(true);
-    }
-  };
-
   const handleQueueCancelled = () => {
     setShowActiveQueue(false);
-    localStorage.removeItem('customerName');
-    setCustomerName('');
+    loadUserProfile();
   };
 
   return (
@@ -84,28 +102,6 @@ const ShopList = ({ onShopSelect, onBack }) => {
               onQueueCancelled={handleQueueCancelled}
             />
           </div>
-        )}
-
-        {/* Check Queue Status Form */}
-        {!showActiveQueue && (
-          <Card className="p-6 mb-8 bg-card border-border max-w-md">
-            <h3 className="text-lg font-bold mb-4">Check Your Queue Status</h3>
-            <form onSubmit={handleNameSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="checkName">Enter your name</Label>
-                <Input
-                  id="checkName"
-                  placeholder="Your name"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="mt-2"
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                Check Queue Status
-              </Button>
-            </form>
-          </Card>
         )}
 
         {/* Search Bar */}
