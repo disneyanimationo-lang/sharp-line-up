@@ -8,13 +8,17 @@ import ServiceSelection from '@/components/customer/ServiceSelection';
 import QueueStatus from '@/components/customer/QueueStatus';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-
 const Landing = () => {
   const [view, setView] = useState('home'); // home, shops, service, queue
   const [selectedShop, setSelectedShop] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [queueData, setQueueData] = useState(null);
-  const { user, isShopOwner, userRole, loading } = useAuth();
+  const {
+    user,
+    isShopOwner,
+    userRole,
+    loading
+  } = useAuth();
   const navigate = useNavigate();
 
   // Redirect shop owners to dashboard
@@ -23,63 +27,49 @@ const Landing = () => {
       navigate('/dashboard');
     }
   }, [user, isShopOwner, loading, navigate]);
-
-  const handleShopSelect = (shop) => {
+  const handleShopSelect = shop => {
     setSelectedShop(shop);
     setView('service');
   };
-
   const handleServiceSelect = (service, queue) => {
     setSelectedService(service);
     setQueueData(queue);
     setView('queue');
   };
-
   const handleBackToShops = () => {
     setView('shops');
     setSelectedShop(null);
     setSelectedService(null);
     setQueueData(null);
   };
-
   if (view === 'shops') {
     return <ShopList onShopSelect={handleShopSelect} />;
   }
-
   if (view === 'service' && selectedShop) {
     return <ServiceSelection shop={selectedShop} onServiceSelect={handleServiceSelect} onBack={handleBackToShops} />;
   }
-
   if (view === 'queue' && queueData) {
     return <QueueStatus queueData={queueData} service={selectedService} shop={selectedShop} onBack={handleBackToShops} />;
   }
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Header Navigation */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Scissors className="w-6 h-6 text-primary" />
-            <span className="font-bold text-xl">Barber Queue</span>
+            
+            <span className="font-bold text-xl">Winqroo</span>
           </div>
           
           <div className="flex items-center gap-3">
-            {user ? (
-              <>
-                {isShopOwner && (
-                  <Button variant="default" onClick={() => navigate('/dashboard')}>
+            {user ? <>
+                {isShopOwner && <Button variant="default" onClick={() => navigate('/dashboard')}>
                     <LayoutDashboard className="w-4 h-4 mr-2" />
                     Dashboard
-                  </Button>
-                )}
-              </>
-            ) : (
-              <Button variant="default" onClick={() => navigate('/auth')}>
+                  </Button>}
+              </> : <Button variant="default" onClick={() => navigate('/auth')}>
                 <LogIn className="w-4 h-4 mr-2" />
                 Sign In
-              </Button>
-            )}
+              </Button>}
           </div>
         </div>
       </header>
@@ -87,11 +77,7 @@ const Landing = () => {
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden pt-16">
         <div className="absolute inset-0 z-0">
-          <img 
-            src={heroImage} 
-            alt="Modern barber shop interior" 
-            className="w-full h-full object-cover opacity-40"
-          />
+          <img src={heroImage} alt="Modern barber shop interior" className="w-full h-full object-cover opacity-40" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/50 to-background"></div>
         </div>
         
@@ -110,20 +96,12 @@ const Landing = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground"
-              onClick={() => setView('shops')}
-            >
+            <Button size="lg" className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setView('shops')}>
               Find A Barber
               <MapPin className="ml-2 w-5 h-5" />
             </Button>
             
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="text-lg px-8 py-6 border-border hover:bg-secondary"
-            >
+            <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-border hover:bg-secondary">
               Scan QR Code
               <QrCode className="ml-2 w-5 h-5" />
             </Button>
@@ -204,17 +182,11 @@ const Landing = () => {
           <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to skip the wait?</h2>
           <p className="text-xl text-muted-foreground mb-10">Join thousands of customers who've ditched the waiting room.</p>
           
-          <Button 
-            size="lg" 
-            className="text-lg px-10 py-6 bg-primary hover:bg-primary/90 text-primary-foreground"
-            onClick={() => setView('shops')}
-          >
+          <Button size="lg" className="text-lg px-10 py-6 bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setView('shops')}>
             Get Started Now
           </Button>
         </div>
       </section>
-    </div>
-  );
+    </div>;
 };
-
 export default Landing;
