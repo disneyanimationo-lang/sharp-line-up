@@ -1,17 +1,21 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Scissors, Clock, QrCode, MapPin, Users, TrendingUp } from 'lucide-react';
+import { Scissors, Clock, QrCode, MapPin, Users, TrendingUp, LogIn, LayoutDashboard } from 'lucide-react';
 import heroImage from "@/assets/hero-barber.jpg";
 import ShopList from '@/components/ShopList';
 import ServiceSelection from '@/components/ServiceSelection';
 import QueueStatus from '@/components/QueueStatus';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [view, setView] = useState('home'); // home, shops, service, queue
   const [selectedShop, setSelectedShop] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [queueData, setQueueData] = useState(null);
+  const { user, isShopOwner } = useAuth();
+  const navigate = useNavigate();
 
   const handleShopSelect = (shop) => {
     setSelectedShop(shop);
@@ -45,8 +49,36 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Header Navigation */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Scissors className="w-6 h-6 text-primary" />
+            <span className="font-bold text-xl">Barber Queue</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {user ? (
+              <>
+                {isShopOwner && (
+                  <Button variant="default" onClick={() => navigate('/dashboard')}>
+                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </Button>
+                )}
+              </>
+            ) : (
+              <Button variant="default" onClick={() => navigate('/auth')}>
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            )}
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative h-screen flex items-center justify-center overflow-hidden pt-16">
         <div className="absolute inset-0 z-0">
           <img 
             src={heroImage} 
