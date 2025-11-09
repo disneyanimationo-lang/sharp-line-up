@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Clock, Scissors, Loader2 } from 'lucide-react';
 import { getShopServices, joinQueue } from '@/services/queueApi';
 import { toast } from 'sonner';
+import ShopReviews from './ShopReviews';
 
 const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
   const [services, setServices] = useState([]);
@@ -70,6 +71,11 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">{shop.name}</h1>
           <p className="text-xl text-muted-foreground">Select a service to join the queue</p>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mb-8">
+          <ShopReviews shopId={shop.id} shopRating={shop.rating || 4.5} />
         </div>
 
         {/* Service Cards */}
