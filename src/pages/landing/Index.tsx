@@ -9,7 +9,7 @@ import QueueStatus from '@/components/customer/QueueStatus';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
-const Index = () => {
+const Landing = () => {
   const [view, setView] = useState('home'); // home, shops, service, queue
   const [selectedShop, setSelectedShop] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
@@ -217,4 +217,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Landing;
