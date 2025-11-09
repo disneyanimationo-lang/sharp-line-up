@@ -162,11 +162,14 @@ export type Database = {
           address: string
           created_at: string | null
           current_queue: number | null
+          description: string | null
           distance: number | null
           estimated_wait: number | null
           id: string
           image: string | null
           name: string
+          opening_hours: Json | null
+          phone: string | null
           qr_code: string
           rating: number | null
           updated_at: string | null
@@ -175,11 +178,14 @@ export type Database = {
           address: string
           created_at?: string | null
           current_queue?: number | null
+          description?: string | null
           distance?: number | null
           estimated_wait?: number | null
           id?: string
           image?: string | null
           name: string
+          opening_hours?: Json | null
+          phone?: string | null
           qr_code: string
           rating?: number | null
           updated_at?: string | null
@@ -188,11 +194,14 @@ export type Database = {
           address?: string
           created_at?: string | null
           current_queue?: number | null
+          description?: string | null
           distance?: number | null
           estimated_wait?: number | null
           id?: string
           image?: string | null
           name?: string
+          opening_hours?: Json | null
+          phone?: string | null
           qr_code?: string
           rating?: number | null
           updated_at?: string | null
