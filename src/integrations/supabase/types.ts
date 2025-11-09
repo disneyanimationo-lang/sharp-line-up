@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      queue_services: {
+        Row: {
+          created_at: string | null
+          id: string
+          queue_id: string
+          service_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          queue_id: string
+          service_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          queue_id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "queue_services_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "queue_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       queues: {
         Row: {
           completed_at: string | null

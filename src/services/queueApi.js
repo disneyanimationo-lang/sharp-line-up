@@ -100,9 +100,25 @@ export const getShopServices = async (shopId) => {
   }
 };
 
-// Join queue
-export const joinQueue = async (shopId, serviceId, customerName) => {
+// Join queue with multiple services
+export const joinQueue = async (shopId, serviceIds, customerName) => {
   try {
+    // Check if customer already has an active queue entry
+    const { data: existingQueue } = await supabase
+      .from('queues')
+      .select('id')
+      .eq('customer_name', customerName)
+      .in('status', ['waiting', 'in_progress'])
+      .limit(1)
+      .maybeSingle();
+
+    if (existingQueue) {
+      return { 
+        data: null, 
+        error: 'You already have an active queue entry. Please complete or cancel it first.' 
+      };
+    }
+
     // Get current queue position
     const { count } = await supabase
       .from('queues')
@@ -112,21 +128,21 @@ export const joinQueue = async (shopId, serviceId, customerName) => {
 
     const position = (count || 0) + 1;
 
-    // Get service duration for estimated wait
-    const { data: service } = await supabase
+    // Get total duration for all selected services
+    const { data: services } = await supabase
       .from('services')
       .select('duration')
-      .eq('id', serviceId)
-      .single();
+      .in('id', serviceIds);
 
-    const estimatedWait = position * (service?.duration || 30);
+    const totalDuration = services?.reduce((sum, service) => sum + service.duration, 0) || 30;
+    const estimatedWait = position * totalDuration;
 
-    // Insert queue entry
-    const { data, error } = await supabase
+    // Insert queue entry (with first service as primary for backward compatibility)
+    const { data: queueData, error: queueError } = await supabase
       .from('queues')
       .insert({
         shop_id: shopId,
-        service_id: serviceId,
+        service_id: serviceIds[0],
         customer_name: customerName,
         position,
         estimated_wait: estimatedWait,
@@ -135,8 +151,21 @@ export const joinQueue = async (shopId, serviceId, customerName) => {
       .select()
       .single();
 
-    if (error) throw error;
-    return { data, error: null };
+    if (queueError) throw queueError;
+
+    // Insert all services into queue_services junction table
+    const queueServices = serviceIds.map(serviceId => ({
+      queue_id: queueData.id,
+      service_id: serviceId
+    }));
+
+    const { error: servicesError } = await supabase
+      .from('queue_services')
+      .insert(queueServices);
+
+    if (servicesError) throw servicesError;
+
+    return { data: queueData, error: null };
   } catch (error) {
     console.error('Error joining queue:', error);
     return { data: null, error: error.message };

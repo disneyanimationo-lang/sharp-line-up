@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import RatingDialog from './RatingDialog';
 
 const QueueStatus = ({ queueData, service, shop, onBack }) => {
+  const services = Array.isArray(service) ? service : [service];
   const [currentPosition, setCurrentPosition] = useState(queueData?.position || 1);
   const [estimatedWait, setEstimatedWait] = useState(queueData?.estimatedWait || 30);
   const [queueStatus, setQueueStatus] = useState(queueData?.status || 'waiting');
@@ -123,16 +124,33 @@ const QueueStatus = ({ queueData, service, shop, onBack }) => {
 
         {/* Service Info */}
         <Card className="p-6 mb-6 bg-card border-border">
-          <h3 className="font-bold mb-4">Your Service</h3>
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="font-semibold text-lg">{service.name}</div>
-              <div className="text-muted-foreground">{service.description}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-primary">₹{service.price}</div>
-              <div className="text-sm text-muted-foreground">{service.duration} min</div>
-            </div>
+          <h3 className="font-bold mb-4">{services.length > 1 ? 'Your Services' : 'Your Service'}</h3>
+          <div className="space-y-4">
+            {services.map((svc, index) => (
+              <div key={index} className="flex justify-between items-center pb-4 border-b border-border last:border-0 last:pb-0">
+                <div>
+                  <div className="font-semibold text-lg">{svc.name}</div>
+                  <div className="text-muted-foreground text-sm">{svc.description}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xl font-bold text-primary">₹{svc.price}</div>
+                  <div className="text-sm text-muted-foreground">{svc.duration} min</div>
+                </div>
+              </div>
+            ))}
+            {services.length > 1 && (
+              <div className="flex justify-between items-center pt-2 border-t-2 border-primary/20">
+                <div className="font-bold text-lg">Total</div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-primary">
+                    ₹{services.reduce((sum, s) => sum + s.price, 0)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {services.reduce((sum, s) => sum + s.duration, 0)} min
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
 
@@ -194,7 +212,7 @@ const QueueStatus = ({ queueData, service, shop, onBack }) => {
           onOpenChange={setShowRatingDialog}
           queueId={queueData.id}
           shopName={shop.name}
-          serviceName={service.name}
+          serviceName={services.map(s => s.name).join(', ')}
           onRatingSubmitted={() => setHasRated(true)}
         />
       </div>

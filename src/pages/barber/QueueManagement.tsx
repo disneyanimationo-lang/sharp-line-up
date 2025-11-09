@@ -6,6 +6,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { CheckCircle, XCircle, ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
 
+interface Service {
+  name: string;
+  duration: number;
+  price: number;
+}
+
 interface QueueEntry {
   id: string;
   customer_name: string;
@@ -13,11 +19,10 @@ interface QueueEntry {
   estimated_wait: number;
   status: string;
   joined_at: string;
-  services: {
-    name: string;
-    duration: number;
-    price: number;
-  };
+  services: Service;
+  queue_services?: Array<{
+    services: Service;
+  }>;
 }
 
 const QueueManagement = () => {
@@ -71,7 +76,7 @@ const QueueManagement = () => {
 
       const { data, error } = await supabase
         .from('queues')
-        .select('*, services(name, duration, price)')
+        .select('*, services(name, duration, price), queue_services(services(name, duration, price))')
         .eq('shop_id', shopOwnerData.shop_id)
         .eq('status', 'waiting')
         .order('position');
@@ -184,9 +189,26 @@ const QueueManagement = () => {
                   </div>
                   
                   <div className="space-y-1 text-muted-foreground">
-                    <p>Service: <span className="text-foreground font-semibold">{entry.services.name}</span></p>
-                    <p>Duration: {entry.services.duration} min</p>
-                    <p>Price: ₹{entry.services.price}</p>
+                    {entry.queue_services && entry.queue_services.length > 0 ? (
+                      <>
+                        <p className="font-semibold text-foreground mb-1">Services ({entry.queue_services.length}):</p>
+                        {entry.queue_services.map((qs, idx) => (
+                          <div key={idx} className="ml-2 mb-1">
+                            <p>• {qs.services.name} - {qs.services.duration} min - ₹{qs.services.price}</p>
+                          </div>
+                        ))}
+                        <p className="font-semibold mt-2">
+                          Total: {entry.queue_services.reduce((sum, qs) => sum + qs.services.duration, 0)} min - 
+                          ₹{entry.queue_services.reduce((sum, qs) => sum + qs.services.price, 0)}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p>Service: <span className="text-foreground font-semibold">{entry.services.name}</span></p>
+                        <p>Duration: {entry.services.duration} min</p>
+                        <p>Price: ₹{entry.services.price}</p>
+                      </>
+                    )}
                     <p>Wait Time: ~{entry.estimated_wait} min</p>
                     <p className="text-sm">Joined: {new Date(entry.joined_at).toLocaleTimeString()}</p>
                   </div>

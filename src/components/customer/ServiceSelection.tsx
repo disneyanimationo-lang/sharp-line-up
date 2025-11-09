@@ -11,7 +11,7 @@ import ShopReviews from './ShopReviews';
 const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedService, setSelectedService] = useState(null);
+  const [selectedServices, setSelectedServices] = useState([]);
   const [customerName, setCustomerName] = useState('');
   const [joining, setJoining] = useState(false);
 
@@ -28,9 +28,28 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
     setLoading(false);
   };
 
+  const handleServiceToggle = (service) => {
+    setSelectedServices(prev => {
+      const isSelected = prev.some(s => s.id === service.id);
+      if (isSelected) {
+        return prev.filter(s => s.id !== service.id);
+      } else {
+        return [...prev, service];
+      }
+    });
+  };
+
+  const getTotalDuration = () => {
+    return selectedServices.reduce((sum, service) => sum + service.duration, 0);
+  };
+
+  const getTotalPrice = () => {
+    return selectedServices.reduce((sum, service) => sum + service.price, 0);
+  };
+
   const handleJoinQueue = async () => {
-    if (!selectedService) {
-      toast.error('Please select a service');
+    if (selectedServices.length === 0) {
+      toast.error('Please select at least one service');
       return;
     }
     if (!customerName.trim()) {
@@ -39,9 +58,10 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
     }
 
     setJoining(true);
+    const serviceIds = selectedServices.map(s => s.id);
     const { data, error } = await joinQueue(
       shop.id,
-      selectedService.id,
+      serviceIds,
       customerName.trim()
     );
     setJoining(false);
@@ -52,7 +72,7 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
     }
 
     toast.success('Successfully joined the queue!');
-    onServiceSelect(selectedService, data);
+    onServiceSelect(selectedServices, data);
   };
 
   return (
@@ -86,62 +106,80 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
         ) : (
           <>
             <div className="grid gap-4 mb-8">
-              {services.map((service) => (
-                <Card 
-                  key={service.id}
-                  className={`p-6 cursor-pointer transition-all duration-300 ${
-                    selectedService?.id === service.id 
-                      ? 'bg-primary/10 border-primary shadow-lg' 
-                      : 'bg-card border-border hover:border-primary/50'
-                  }`}
-                  onClick={() => setSelectedService(service)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                          selectedService?.id === service.id 
-                            ? 'border-primary bg-primary' 
-                            : 'border-border'
-                        }`}>
-                          {selectedService?.id === service.id && (
-                            <div className="w-3 h-3 rounded-full bg-primary-foreground"></div>
-                          )}
+              {services.map((service) => {
+                const isSelected = selectedServices.some(s => s.id === service.id);
+                return (
+                  <Card 
+                    key={service.id}
+                    className={`p-6 cursor-pointer transition-all duration-300 ${
+                      isSelected 
+                        ? 'bg-primary/10 border-primary shadow-lg' 
+                        : 'bg-card border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => handleServiceToggle(service)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center ${
+                            isSelected 
+                              ? 'border-primary bg-primary' 
+                              : 'border-border'
+                          }`}>
+                            {isSelected && (
+                              <div className="w-3 h-3 text-primary-foreground">✓</div>
+                            )}
+                          </div>
+                          <h3 className="text-xl font-bold">{service.name}</h3>
                         </div>
-                        <h3 className="text-xl font-bold">{service.name}</h3>
+                        
+                        <p className="text-muted-foreground mb-3 ml-9">{service.description}</p>
+                        
+                        <div className="flex items-center gap-6 ml-9">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Clock className="w-4 h-4" />
+                            <span>{service.duration} min</span>
+                          </div>
+                          <div className="text-primary font-bold text-lg">
+                            ₹{service.price}
+                          </div>
+                        </div>
                       </div>
                       
-                      <p className="text-muted-foreground mb-3 ml-9">{service.description}</p>
-                      
-                      <div className="flex items-center gap-6 ml-9">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Clock className="w-4 h-4" />
-                          <span>{service.duration} min</span>
-                        </div>
-                        <div className="text-primary font-bold text-lg">
-                          ₹{service.price}
-                        </div>
-                      </div>
+                      <Scissors className={`w-6 h-6 ${
+                        isSelected ? 'text-primary' : 'text-muted-foreground'
+                      }`} />
                     </div>
-                    
-                    <Scissors className={`w-6 h-6 ${
-                      selectedService?.id === service.id ? 'text-primary' : 'text-muted-foreground'
-                    }`} />
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
 
             {/* Confirm Section */}
-            {selectedService && (
+            {selectedServices.length > 0 && (
               <div className="sticky bottom-6 bg-card border border-border rounded-lg p-6 shadow-lg">
                 <div className="space-y-4">
                   <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                    <p className="text-sm text-muted-foreground mb-1">Selected Service:</p>
-                    <p className="font-semibold text-lg">{selectedService.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Estimated wait: ~{shop.currentQueue * selectedService.duration} minutes
-                    </p>
+                    <p className="text-sm text-muted-foreground mb-2">Selected Services ({selectedServices.length}):</p>
+                    <div className="space-y-1 mb-3">
+                      {selectedServices.map(service => (
+                        <div key={service.id} className="flex justify-between items-center">
+                          <span className="font-semibold">{service.name}</span>
+                          <span className="text-sm text-muted-foreground">₹{service.price}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-primary/20">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Duration: {getTotalDuration()} min</p>
+                        <p className="text-sm text-muted-foreground">
+                          Estimated wait: ~{shop.currentQueue * getTotalDuration()} minutes
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-primary">₹{getTotalPrice()}</p>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
