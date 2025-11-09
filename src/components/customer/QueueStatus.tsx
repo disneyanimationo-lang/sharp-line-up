@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Clock, Users, CheckCircle, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -13,9 +14,13 @@ const QueueStatus = ({ queueData, service, shop, onBack }) => {
   const [queueStatus, setQueueStatus] = useState(queueData?.status || 'waiting');
   const [hasRated, setHasRated] = useState(!!queueData?.rating);
   const [showRatingDialog, setShowRatingDialog] = useState(false);
+  const [liveQueue, setLiveQueue] = useState([]);
 
   useEffect(() => {
-    if (!queueData?.id) return;
+    if (!queueData?.id || !shop?.id) return;
+
+    // Load initial live queue
+    loadLiveQueue();
 
     // Subscribe to real-time updates for this queue entry
     const channel = supabase
@@ -44,12 +49,43 @@ const QueueStatus = ({ queueData, service, shop, onBack }) => {
           }
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'queues',
+          filter: `shop_id=eq.${shop.id}`
+        },
+        () => {
+          // Reload live queue on any change
+          loadLiveQueue();
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queueData?.id, hasRated]);
+  }, [queueData?.id, hasRated, shop?.id]);
+
+  const loadLiveQueue = async () => {
+    if (!shop?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('queues')
+        .select('id, customer_name, position, status, queue_services(services(name))')
+        .eq('shop_id', shop.id)
+        .eq('status', 'waiting')
+        .order('position');
+
+      if (error) throw error;
+      setLiveQueue(data || []);
+    } catch (error) {
+      console.error('Error loading live queue:', error);
+    }
+  };
 
   const getStatusMessage = () => {
     if (currentPosition === 1) {
@@ -117,9 +153,65 @@ const QueueStatus = ({ queueData, service, shop, onBack }) => {
             <div className="p-4 bg-secondary/50 rounded-lg">
               <Users className="w-6 h-6 text-primary mx-auto mb-2" />
               <div className="text-sm text-muted-foreground">In Queue</div>
-              <div className="text-2xl font-bold">{currentPosition + Math.floor(Math.random() * 3)}</div>
+              <div className="text-2xl font-bold">{liveQueue.length}</div>
             </div>
           </div>
+        </Card>
+
+        {/* Live Queue Display */}
+        <Card className="p-6 mb-6 bg-card border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="w-5 h-5 text-primary" />
+            <h3 className="font-bold text-lg">Live Queue</h3>
+            <Badge variant="outline" className="ml-auto">
+              {liveQueue.length} {liveQueue.length === 1 ? 'person' : 'people'} waiting
+            </Badge>
+          </div>
+
+          {liveQueue.length === 0 ? (
+            <p className="text-center text-muted-foreground py-4">No one in queue</p>
+          ) : (
+            <div className="space-y-3">
+              {liveQueue.map((entry, index) => {
+                const isCurrentUser = entry.id === queueData.id;
+                const services = entry.queue_services?.map((qs: any) => qs.services.name).join(', ') || 'Service';
+                
+                return (
+                  <div 
+                    key={entry.id}
+                    className={`p-4 rounded-lg border transition-all duration-300 ${
+                      isCurrentUser 
+                        ? 'bg-primary/10 border-primary shadow-md' 
+                        : 'bg-secondary/30 border-border'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Badge 
+                          variant={isCurrentUser ? "default" : "outline"}
+                          className="text-base font-bold min-w-[40px] justify-center"
+                        >
+                          #{entry.position}
+                        </Badge>
+                        <div>
+                          <div className={`font-semibold ${isCurrentUser ? 'text-primary' : ''}`}>
+                            {isCurrentUser ? 'You' : entry.customer_name}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {services}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {isCurrentUser && (
+                        <CheckCircle className="w-5 h-5 text-primary" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </Card>
 
         {/* Service Info */}
