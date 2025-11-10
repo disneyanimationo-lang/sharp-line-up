@@ -1,7 +1,7 @@
 import { LayoutDashboard, Users, Scissors, Store, LogOut } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useMockAuth';
 import {
   Sidebar,
   SidebarContent,

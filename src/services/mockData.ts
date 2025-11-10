@@ -228,6 +228,16 @@ export const mockDb = {
     saveToStorage(STORAGE_KEYS.USERS, users);
     return newUser;
   },
+  updateUser: (id: string, updates: any) => {
+    const users = getFromStorage(STORAGE_KEYS.USERS, []);
+    const index = users.findIndex((u: any) => u.id === id);
+    if (index !== -1) {
+      users[index] = { ...users[index], ...updates };
+      saveToStorage(STORAGE_KEYS.USERS, users);
+      return users[index];
+    }
+    return null;
+  },
 
   // Shop Owners
   getShopOwners: () => getFromStorage(STORAGE_KEYS.SHOP_OWNERS, []),

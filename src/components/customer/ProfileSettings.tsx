@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useMockAuth';
+import { mockDb } from '@/services/mockData';
 import { toast } from 'sonner';
 import { ArrowLeft, Upload } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -22,50 +22,22 @@ const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
   // Load profile data
   useState(() => {
     if (user) {
-      supabase
-        .from('profiles')
-        .select('name, avatar_url')
-        .eq('id', user.id)
-        .maybeSingle()
-        .then(async ({ data, error }) => {
-          if (data) {
-            setName(data.name || '');
-            setAvatarUrl(data.avatar_url || '');
-          } else if (!error) {
-            // Create profile if it doesn't exist
-            const { data: newProfile } = await supabase
-              .from('profiles')
-              .insert({ id: user.id, name: user.email?.split('@')[0] || 'User' })
-              .select('name, avatar_url')
-              .single();
-            
-            if (newProfile) {
-              setName(newProfile.name || '');
-              setAvatarUrl(newProfile.avatar_url || '');
-            }
-          }
-        });
+      setName(user.name || user.email?.split('@')[0] || 'User');
+      setAvatarUrl('');
     }
   });
 
   const handleSave = async () => {
     if (!user) return;
-    
     setLoading(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update({ 
-        name,
-        avatar_url: avatarUrl 
-      })
-      .eq('id', user.id);
-
-    if (error) {
-      toast.error('Failed to update profile');
-    } else {
+    try {
+      mockDb.updateUser(user.id, { name, avatar_url: avatarUrl });
       toast.success('Profile updated successfully');
+    } catch (e) {
+      toast.error('Failed to update profile');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
