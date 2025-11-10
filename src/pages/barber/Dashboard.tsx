@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Clock, CheckCircle, TrendingUp } from 'lucide-react';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalQueue: 0,
     avgWaitTime: 0,
@@ -128,21 +131,33 @@ const Dashboard = () => {
       <Card className="mt-6 p-6 bg-card border-border">
         <h3 className="text-xl font-bold mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a href="/dashboard/queue" className="p-4 bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors">
+          <Button
+            variant="ghost"
+            className="p-4 h-auto bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors flex flex-col items-start"
+            onClick={() => navigate('/dashboard/queue')}
+          >
             <Users className="w-6 h-6 text-primary mb-2" />
             <h4 className="font-semibold">Manage Queue</h4>
             <p className="text-sm text-muted-foreground">View and update customer queue</p>
-          </a>
-          <a href="/dashboard/services" className="p-4 bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors">
+          </Button>
+          <Button
+            variant="ghost"
+            className="p-4 h-auto bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors flex flex-col items-start"
+            onClick={() => navigate('/dashboard/services')}
+          >
             <TrendingUp className="w-6 h-6 text-primary mb-2" />
             <h4 className="font-semibold">Update Services</h4>
             <p className="text-sm text-muted-foreground">Manage service offerings</p>
-          </a>
-          <a href="/dashboard/shop" className="p-4 bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors">
+          </Button>
+          <Button
+            variant="ghost"
+            className="p-4 h-auto bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors flex flex-col items-start"
+            onClick={() => navigate('/dashboard/shop')}
+          >
             <CheckCircle className="w-6 h-6 text-primary mb-2" />
             <h4 className="font-semibold">Shop Settings</h4>
             <p className="text-sm text-muted-foreground">Update shop information</p>
-          </a>
+          </Button>
         </div>
       </Card>
     </div>
