@@ -36,6 +36,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (savedSession) {
       try {
         const sessionData = JSON.parse(savedSession);
+        
+        // Update "John Customer" to "Abdul" if found
+        if (sessionData.user.name === 'John Customer') {
+          sessionData.user.name = 'Abdul';
+          localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+          
+          // Also update in mockDb if exists
+          const dbUser = mockDb.getUserByEmail(sessionData.user.email);
+          if (dbUser) {
+            mockDb.updateUser(sessionData.user.id, { name: 'Abdul' });
+          }
+        }
+        
         setUser(sessionData.user);
         setSession(sessionData);
         setUserRole(sessionData.user.role);
