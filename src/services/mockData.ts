@@ -28,66 +28,294 @@ const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9
 
 // Initialize default data
 const initializeData = () => {
-  // Default services
+  // Default services - Indian barbershop services
   const defaultServices = [
-    { id: 's1', name: 'Classic Haircut', duration: 30, price: 25, description: 'Traditional haircut with scissors', is_custom: false, shop_id: null },
-    { id: 's2', name: 'Beard Trim', duration: 15, price: 15, description: 'Professional beard trimming and shaping', is_custom: false, shop_id: null },
-    { id: 's3', name: 'Hot Towel Shave', duration: 45, price: 35, description: 'Luxurious hot towel shave experience', is_custom: false, shop_id: null },
-    { id: 's4', name: 'Hair Color', duration: 60, price: 50, description: 'Professional hair coloring', is_custom: false, shop_id: null },
-    { id: 's5', name: 'Deluxe Package', duration: 90, price: 70, description: 'Haircut, beard trim, and hot towel shave', is_custom: false, shop_id: null },
+    { id: 's1', name: 'Classic Haircut', duration: 30, price: 250, description: 'Traditional haircut with scissors', is_custom: false, shop_id: null },
+    { id: 's2', name: 'Beard Trim & Shape', duration: 15, price: 150, description: 'Professional beard trimming and shaping', is_custom: false, shop_id: null },
+    { id: 's3', name: 'Traditional Shave', duration: 45, price: 200, description: 'Classic straight razor shave with hot towel', is_custom: false, shop_id: null },
+    { id: 's4', name: 'Hair Color', duration: 60, price: 500, description: 'Professional hair coloring', is_custom: false, shop_id: null },
+    { id: 's5', name: 'Head Massage', duration: 20, price: 180, description: 'Relaxing Indian head massage with oil', is_custom: false, shop_id: null },
+    { id: 's6', name: 'Royal Grooming Package', duration: 90, price: 800, description: 'Haircut, beard trim, shave, and head massage', is_custom: false, shop_id: null },
+    { id: 's7', name: 'Kids Haircut', duration: 20, price: 180, description: 'Haircut for children under 12', is_custom: false, shop_id: null },
+    { id: 's8', name: 'Hair Spa Treatment', duration: 45, price: 600, description: 'Deep conditioning and scalp treatment', is_custom: false, shop_id: null },
+    { id: 's9', name: 'Facial & Cleanup', duration: 40, price: 400, description: 'Professional facial and skin cleanup', is_custom: false, shop_id: null },
   ];
 
-  // Default shop
-  const defaultShop = {
-    id: 'shop1',
-    name: 'Classic Cuts Barbershop',
-    address: '123 Main Street, Downtown',
-    rating: 4.5,
-    qr_code: 'SHOP_DEMO_QR123',
-    image: '/placeholder.svg',
-    phone: '(555) 123-4567',
-    description: 'Your neighborhood barbershop for classic cuts and modern styles',
-    latitude: 40.7128,
-    longitude: -74.0060,
-    distance: 0.5,
-    current_queue: 0,
-    estimated_wait: 0,
-    opening_hours: {
-      monday: '9:00 AM - 6:00 PM',
-      tuesday: '9:00 AM - 6:00 PM',
-      wednesday: '9:00 AM - 6:00 PM',
-      thursday: '9:00 AM - 6:00 PM',
-      friday: '9:00 AM - 6:00 PM',
-      saturday: '9:00 AM - 5:00 PM',
-      sunday: 'Closed'
+  // Indian barbershops across different cities
+  const defaultShops = [
+    {
+      id: 'shop1',
+      name: 'Sharma Hair Studio',
+      address: 'Shop 12, Connaught Place, New Delhi',
+      rating: 4.5,
+      qr_code: 'SHOP_DELHI_QR001',
+      image: '/placeholder.svg',
+      phone: '+91 98765 43210',
+      description: 'Premier barbershop in the heart of Delhi offering modern styles and traditional grooming',
+      latitude: 28.6328,
+      longitude: 77.2197,
+      distance: 1.2,
+      current_queue: 3,
+      estimated_wait: 45,
+      opening_hours: {
+        monday: '10:00 AM - 8:00 PM',
+        tuesday: '10:00 AM - 8:00 PM',
+        wednesday: '10:00 AM - 8:00 PM',
+        thursday: '10:00 AM - 8:00 PM',
+        friday: '10:00 AM - 8:00 PM',
+        saturday: '9:00 AM - 9:00 PM',
+        sunday: '9:00 AM - 9:00 PM'
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
+    {
+      id: 'shop2',
+      name: 'Royal Cuts Mumbai',
+      address: '45 Linking Road, Bandra West, Mumbai',
+      rating: 4.8,
+      qr_code: 'SHOP_MUMBAI_QR002',
+      image: '/placeholder.svg',
+      phone: '+91 98123 45678',
+      description: 'Luxury grooming experience with celebrity stylists in Bandra',
+      latitude: 19.0544,
+      longitude: 72.8347,
+      distance: 2.5,
+      current_queue: 5,
+      estimated_wait: 60,
+      opening_hours: {
+        monday: '11:00 AM - 9:00 PM',
+        tuesday: '11:00 AM - 9:00 PM',
+        wednesday: '11:00 AM - 9:00 PM',
+        thursday: '11:00 AM - 9:00 PM',
+        friday: '11:00 AM - 10:00 PM',
+        saturday: '10:00 AM - 10:00 PM',
+        sunday: '10:00 AM - 10:00 PM'
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 'shop3',
+      name: 'Singh Brothers Salon',
+      address: 'Model Town, Jalandhar, Punjab',
+      rating: 4.6,
+      qr_code: 'SHOP_PUNJAB_QR003',
+      image: '/placeholder.svg',
+      phone: '+91 98765 11111',
+      description: 'Traditional Punjabi barbershop with modern amenities and expert barbers',
+      latitude: 31.3260,
+      longitude: 75.5762,
+      distance: 0.8,
+      current_queue: 2,
+      estimated_wait: 30,
+      opening_hours: {
+        monday: '9:00 AM - 8:00 PM',
+        tuesday: '9:00 AM - 8:00 PM',
+        wednesday: '9:00 AM - 8:00 PM',
+        thursday: '9:00 AM - 8:00 PM',
+        friday: '9:00 AM - 8:00 PM',
+        saturday: '9:00 AM - 9:00 PM',
+        sunday: '9:00 AM - 7:00 PM'
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 'shop4',
+      name: 'Gentlemen\'s Lounge Bangalore',
+      address: 'Indiranagar 100 Feet Road, Bangalore',
+      rating: 4.7,
+      qr_code: 'SHOP_BANGALORE_QR004',
+      image: '/placeholder.svg',
+      phone: '+91 98765 22222',
+      description: 'Upscale men\'s grooming lounge in trendy Indiranagar',
+      latitude: 12.9716,
+      longitude: 77.5946,
+      distance: 3.1,
+      current_queue: 4,
+      estimated_wait: 50,
+      opening_hours: {
+        monday: '10:00 AM - 9:00 PM',
+        tuesday: '10:00 AM - 9:00 PM',
+        wednesday: '10:00 AM - 9:00 PM',
+        thursday: '10:00 AM - 9:00 PM',
+        friday: '10:00 AM - 10:00 PM',
+        saturday: '9:00 AM - 10:00 PM',
+        sunday: '9:00 AM - 9:00 PM'
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 'shop5',
+      name: 'Kumar\'s Classic Cuts',
+      address: 'Anna Nagar, Chennai',
+      rating: 4.4,
+      qr_code: 'SHOP_CHENNAI_QR005',
+      image: '/placeholder.svg',
+      phone: '+91 98765 33333',
+      description: 'Family-friendly salon serving Chennai for over 20 years',
+      latitude: 13.0843,
+      longitude: 80.2705,
+      distance: 1.5,
+      current_queue: 1,
+      estimated_wait: 20,
+      opening_hours: {
+        monday: '9:00 AM - 8:00 PM',
+        tuesday: '9:00 AM - 8:00 PM',
+        wednesday: '9:00 AM - 8:00 PM',
+        thursday: '9:00 AM - 8:00 PM',
+        friday: '9:00 AM - 8:00 PM',
+        saturday: '8:00 AM - 9:00 PM',
+        sunday: '8:00 AM - 8:00 PM'
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 'shop6',
+      name: 'Patel Hair & Beard Studio',
+      address: 'CG Road, Ahmedabad, Gujarat',
+      rating: 4.9,
+      qr_code: 'SHOP_AHMEDABAD_QR006',
+      image: '/placeholder.svg',
+      phone: '+91 98765 44444',
+      description: 'Award-winning salon specializing in beard artistry and contemporary styles',
+      latitude: 23.0225,
+      longitude: 72.5714,
+      distance: 0.6,
+      current_queue: 6,
+      estimated_wait: 75,
+      opening_hours: {
+        monday: '10:00 AM - 9:00 PM',
+        tuesday: '10:00 AM - 9:00 PM',
+        wednesday: '10:00 AM - 9:00 PM',
+        thursday: '10:00 AM - 9:00 PM',
+        friday: '10:00 AM - 10:00 PM',
+        saturday: '9:00 AM - 10:00 PM',
+        sunday: '9:00 AM - 10:00 PM'
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 'shop7',
+      name: 'The Groom Room Hyderabad',
+      address: 'Jubilee Hills, Hyderabad',
+      rating: 4.5,
+      qr_code: 'SHOP_HYDERABAD_QR007',
+      image: '/placeholder.svg',
+      phone: '+91 98765 55555',
+      description: 'Modern grooming studio with traditional hospitality in Jubilee Hills',
+      latitude: 17.4065,
+      longitude: 78.4772,
+      distance: 2.8,
+      current_queue: 2,
+      estimated_wait: 35,
+      opening_hours: {
+        monday: '10:00 AM - 8:00 PM',
+        tuesday: '10:00 AM - 8:00 PM',
+        wednesday: '10:00 AM - 8:00 PM',
+        thursday: '10:00 AM - 8:00 PM',
+        friday: '10:00 AM - 9:00 PM',
+        saturday: '9:00 AM - 9:00 PM',
+        sunday: '9:00 AM - 8:00 PM'
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 'shop8',
+      name: 'Mehta Salon Kolkata',
+      address: 'Park Street, Kolkata',
+      rating: 4.3,
+      qr_code: 'SHOP_KOLKATA_QR008',
+      image: '/placeholder.svg',
+      phone: '+91 98765 66666',
+      description: 'Heritage salon on iconic Park Street serving Kolkata since 1985',
+      latitude: 22.5726,
+      longitude: 88.3639,
+      distance: 1.9,
+      current_queue: 3,
+      estimated_wait: 40,
+      opening_hours: {
+        monday: '9:00 AM - 8:00 PM',
+        tuesday: '9:00 AM - 8:00 PM',
+        wednesday: '9:00 AM - 8:00 PM',
+        thursday: '9:00 AM - 8:00 PM',
+        friday: '9:00 AM - 9:00 PM',
+        saturday: '8:00 AM - 9:00 PM',
+        sunday: '8:00 AM - 8:00 PM'
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ];
 
-  // Default users
+  // Indian users
   const defaultUsers = [
-    { id: 'user1', email: 'shop@demo.com', role: 'shop_owner', name: 'Shop Owner' },
-    { id: 'user2', email: 'customer@demo.com', role: 'customer', name: 'John Customer' },
+    { id: 'user1', email: 'shop@demo.com', role: 'shop_owner', name: 'Rajesh Sharma' },
+    { id: 'user2', email: 'customer@demo.com', role: 'customer', name: 'Arjun Kumar' },
+    { id: 'user3', email: 'owner2@demo.com', role: 'shop_owner', name: 'Vikram Singh' },
+    { id: 'user4', email: 'owner3@demo.com', role: 'shop_owner', name: 'Amit Patel' },
+    { id: 'user5', email: 'customer2@demo.com', role: 'customer', name: 'Priya Mehta' },
+    { id: 'user6', email: 'customer3@demo.com', role: 'customer', name: 'Rahul Verma' },
   ];
 
   if (!localStorage.getItem(STORAGE_KEYS.SERVICES)) {
     saveToStorage(STORAGE_KEYS.SERVICES, defaultServices);
   }
   if (!localStorage.getItem(STORAGE_KEYS.SHOPS)) {
-    saveToStorage(STORAGE_KEYS.SHOPS, [defaultShop]);
+    saveToStorage(STORAGE_KEYS.SHOPS, defaultShops);
   }
   if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
     saveToStorage(STORAGE_KEYS.USERS, defaultUsers);
   }
   if (!localStorage.getItem(STORAGE_KEYS.SHOP_OWNERS)) {
-    saveToStorage(STORAGE_KEYS.SHOP_OWNERS, [{ id: 'so1', user_id: 'user1', shop_id: 'shop1' }]);
+    saveToStorage(STORAGE_KEYS.SHOP_OWNERS, [
+      { id: 'so1', user_id: 'user1', shop_id: 'shop1' },
+      { id: 'so2', user_id: 'user3', shop_id: 'shop2' },
+      { id: 'so3', user_id: 'user4', shop_id: 'shop3' },
+    ]);
   }
   if (!localStorage.getItem(STORAGE_KEYS.SHOP_SERVICES)) {
     saveToStorage(STORAGE_KEYS.SHOP_SERVICES, [
+      // Sharma Hair Studio services
       { id: 'ss1', shop_id: 'shop1', service_id: 's1', custom_price: null, custom_duration: null },
       { id: 'ss2', shop_id: 'shop1', service_id: 's2', custom_price: null, custom_duration: null },
       { id: 'ss3', shop_id: 'shop1', service_id: 's3', custom_price: null, custom_duration: null },
+      { id: 'ss4', shop_id: 'shop1', service_id: 's5', custom_price: null, custom_duration: null },
+      // Royal Cuts Mumbai services
+      { id: 'ss5', shop_id: 'shop2', service_id: 's1', custom_price: 300, custom_duration: null },
+      { id: 'ss6', shop_id: 'shop2', service_id: 's2', custom_price: 200, custom_duration: null },
+      { id: 'ss7', shop_id: 'shop2', service_id: 's6', custom_price: null, custom_duration: null },
+      { id: 'ss8', shop_id: 'shop2', service_id: 's9', custom_price: null, custom_duration: null },
+      // Singh Brothers Salon services
+      { id: 'ss9', shop_id: 'shop3', service_id: 's1', custom_price: null, custom_duration: null },
+      { id: 'ss10', shop_id: 'shop3', service_id: 's2', custom_price: null, custom_duration: null },
+      { id: 'ss11', shop_id: 'shop3', service_id: 's7', custom_price: null, custom_duration: null },
+      // Gentlemen's Lounge services
+      { id: 'ss12', shop_id: 'shop4', service_id: 's1', custom_price: 350, custom_duration: null },
+      { id: 'ss13', shop_id: 'shop4', service_id: 's6', custom_price: null, custom_duration: null },
+      { id: 'ss14', shop_id: 'shop4', service_id: 's8', custom_price: null, custom_duration: null },
+      // Kumar's Classic Cuts services
+      { id: 'ss15', shop_id: 'shop5', service_id: 's1', custom_price: null, custom_duration: null },
+      { id: 'ss16', shop_id: 'shop5', service_id: 's2', custom_price: null, custom_duration: null },
+      { id: 'ss17', shop_id: 'shop5', service_id: 's7', custom_price: 150, custom_duration: null },
+      // Patel Hair & Beard Studio services
+      { id: 'ss18', shop_id: 'shop6', service_id: 's1', custom_price: null, custom_duration: null },
+      { id: 'ss19', shop_id: 'shop6', service_id: 's2', custom_price: 180, custom_duration: 20 },
+      { id: 'ss20', shop_id: 'shop6', service_id: 's3', custom_price: null, custom_duration: null },
+      { id: 'ss21', shop_id: 'shop6', service_id: 's6', custom_price: null, custom_duration: null },
+      // The Groom Room services
+      { id: 'ss22', shop_id: 'shop7', service_id: 's1', custom_price: null, custom_duration: null },
+      { id: 'ss23', shop_id: 'shop7', service_id: 's2', custom_price: null, custom_duration: null },
+      { id: 'ss24', shop_id: 'shop7', service_id: 's8', custom_price: null, custom_duration: null },
+      // Mehta Salon services
+      { id: 'ss25', shop_id: 'shop8', service_id: 's1', custom_price: null, custom_duration: null },
+      { id: 'ss26', shop_id: 'shop8', service_id: 's3', custom_price: null, custom_duration: null },
+      { id: 'ss27', shop_id: 'shop8', service_id: 's5', custom_price: null, custom_duration: null },
     ]);
   }
   if (!localStorage.getItem(STORAGE_KEYS.QUEUES)) {
