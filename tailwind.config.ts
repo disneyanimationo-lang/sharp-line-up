@@ -59,11 +59,20 @@ export default {
         },
         "blue-primary": "hsl(var(--blue-primary))",
         "blue-accent": "hsl(var(--blue-accent))",
+        "blue-dark": "hsl(var(--blue-dark))",
+        "blue-darker": "hsl(var(--blue-darker))",
+        "blue-light": "hsl(var(--blue-light))",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      backgroundImage: {
+        "gradient-hero": "var(--gradient-hero)",
+        "gradient-hero-overlay": "var(--gradient-hero-overlay)",
+        "gradient-cta": "var(--gradient-cta)",
+        "gradient-subtle": "var(--gradient-subtle)",
       },
       keyframes: {
         "accordion-down": {

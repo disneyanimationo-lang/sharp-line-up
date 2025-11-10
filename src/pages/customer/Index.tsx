@@ -124,10 +124,10 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden pt-16">
+      <section className="relative h-screen flex items-center justify-center overflow-hidden pt-16 bg-gradient-hero">
         <div className="absolute inset-0 z-0">
-          <img src={heroImage} alt="Modern salon shop interior" className="w-full h-full object-cover opacity-40" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/50 to-background"></div>
+          <img src={heroImage} alt="Modern salon shop interior" className="w-full h-full object-cover opacity-20" />
+          <div className="absolute inset-0 bg-gradient-hero-overlay"></div>
         </div>
         
         <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
@@ -221,8 +221,9 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 px-6">
-        <div className="max-w-4xl mx-auto text-center">
+      <section className="py-24 px-6 bg-gradient-cta relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-primary/5 to-transparent"></div>
+        <div className="max-w-4xl mx-auto text-center relative z-10">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to skip the wait?</h2>
           <p className="text-xl text-muted-foreground mb-10">Join thousands of customers who've ditched the waiting room.</p>
           
