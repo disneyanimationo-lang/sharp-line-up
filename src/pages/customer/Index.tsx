@@ -7,17 +7,15 @@ import ShopList from '@/components/customer/ShopList';
 import ServiceSelection from '@/components/customer/ServiceSelection';
 import QueueStatus from '@/components/customer/QueueStatus';
 import ProfileSettings from '@/components/customer/ProfileSettings';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useMockAuth';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { supabase } from '@/integrations/supabase/client';
 const Index = () => {
   const [view, setView] = useState('home'); // home, shops, service, queue, profile
   const [selectedShop, setSelectedShop] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [queueData, setQueueData] = useState(null);
-  const [profile, setProfile] = useState<{ name: string; avatar_url: string | null } | null>(null);
   const {
     user,
     isShopOwner,
@@ -26,33 +24,6 @@ const Index = () => {
     signOut
   } = useAuth();
   const navigate = useNavigate();
-
-  // Load user profile
-  useEffect(() => {
-    if (user) {
-      supabase
-        .from('profiles')
-        .select('name, avatar_url')
-        .eq('id', user.id)
-        .maybeSingle()
-        .then(async ({ data, error }) => {
-          if (data) {
-            setProfile(data);
-          } else if (!error) {
-            // Create profile if it doesn't exist
-            const { data: newProfile } = await supabase
-              .from('profiles')
-              .insert({ id: user.id, name: user.email?.split('@')[0] || 'User' })
-              .select('name, avatar_url')
-              .single();
-            
-            if (newProfile) {
-              setProfile(newProfile);
-            }
-          }
-        });
-    }
-  }, [user]);
 
   // Redirect shop owners to dashboard
   useEffect(() => {
@@ -106,13 +77,12 @@ const Index = () => {
                   </Button>
                 )}
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-2">
                       <Avatar className="w-8 h-8">
-                        <AvatarImage src={profile?.avatar_url || undefined} />
-                        <AvatarFallback>{profile?.name?.charAt(0)?.toUpperCase() || 'U'}</AvatarFallback>
+                        <AvatarFallback>{user?.name?.charAt(0)?.toUpperCase() || 'U'}</AvatarFallback>
                       </Avatar>
-                      <span className="hidden sm:inline">{profile?.name || 'User'}</span>
+                      <span className="hidden sm:inline">{user?.name || 'User'}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
