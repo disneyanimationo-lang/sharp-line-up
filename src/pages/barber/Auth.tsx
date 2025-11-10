@@ -253,68 +253,6 @@ const Auth = () => {
           </Tabs>
         </Card>
 
-        <Card className="mt-6 p-4 bg-secondary/30 border-border">
-          <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-            <div className="flex-1">
-              <h3 className="font-semibold text-sm mb-2">Demo Accounts</h3>
-              <p className="text-xs text-muted-foreground mb-3">Use these credentials to test the application:</p>
-              
-              <div className="space-y-3">
-                <div className="bg-background/50 rounded-lg p-3 border border-border/50">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Store className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-medium">Shop Owner Account</span>
-                  </div>
-                  <div className="text-xs space-y-1 ml-6">
-                    <div className="flex">
-                      <span className="text-muted-foreground w-16">Email:</span>
-                      <span className="font-mono">shop@demo.com</span>
-                    </div>
-                    <div className="flex">
-                      <span className="text-muted-foreground w-16">Password:</span>
-                      <span className="font-mono">demo123</span>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="mt-2 h-7 text-xs"
-                      onClick={() => setLoginData({ email: 'shop@demo.com', password: 'demo123' })}
-                    >
-                      Auto-fill
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="bg-background/50 rounded-lg p-3 border border-border/50">
-                  <div className="flex items-center gap-2 mb-1">
-                    <User className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-medium">Customer Account</span>
-                  </div>
-                  <div className="text-xs space-y-1 ml-6">
-                    <div className="flex">
-                      <span className="text-muted-foreground w-16">Email:</span>
-                      <span className="font-mono">customer@demo.com</span>
-                    </div>
-                    <div className="flex">
-                      <span className="text-muted-foreground w-16">Password:</span>
-                      <span className="font-mono">demo123</span>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="mt-2 h-7 text-xs"
-                      onClick={() => setLoginData({ email: 'customer@demo.com', password: 'demo123' })}
-                    >
-                      Auto-fill
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-
         <div className="text-center mt-6">
           <Button variant="ghost" onClick={() => navigate('/')}>
             Back to Home
