@@ -57,8 +57,8 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        "barber-gold": "hsl(var(--barber-gold))",
-        "barber-red": "hsl(var(--barber-red))",
+        "blue-primary": "hsl(var(--blue-primary))",
+        "blue-accent": "hsl(var(--blue-accent))",
       },
       borderRadius: {
         lg: "var(--radius)",
