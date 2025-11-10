@@ -126,7 +126,7 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden pt-16">
         <div className="absolute inset-0 z-0">
-          <img src={heroImage} alt="Modern barber shop interior" className="w-full h-full object-cover opacity-40" />
+          <img src={heroImage} alt="Modern salon shop interior" className="w-full h-full object-cover opacity-40" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/50 to-background"></div>
         </div>
         
@@ -144,15 +144,10 @@ const Index = () => {
             Join the queue remotely, track your position in real-time, and walk in exactly when it's your turn.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex justify-center">
             <Button size="lg" className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setView('shops')}>
-              Find A Barber
+              Find A Salon
               <MapPin className="ml-2 w-5 h-5" />
-            </Button>
-            
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-border hover:bg-secondary">
-              Scan QR Code
-              <QrCode className="ml-2 w-5 h-5" />
             </Button>
           </div>
         </div>
@@ -163,7 +158,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">How It Works</h2>
-            <p className="text-xl text-muted-foreground">Three simple steps to a better barber experience</p>
+            <p className="text-xl text-muted-foreground">Three simple steps to a better salon experience</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -172,7 +167,7 @@ const Index = () => {
                 <MapPin className="w-7 h-7 text-primary" />
               </div>
               <h3 className="text-2xl font-bold mb-4">Find Your Shop</h3>
-              <p className="text-muted-foreground">Browse nearby barber shops or scan their QR code when you arrive.</p>
+              <p className="text-muted-foreground">Browse nearby salon shops or scan their QR code when you arrive.</p>
             </Card>
 
             <Card className="p-8 bg-card border-border hover:border-primary/50 transition-all duration-300">
@@ -211,7 +206,7 @@ const Index = () => {
                 <Scissors className="w-12 h-12 text-primary" />
               </div>
               <div className="text-5xl font-bold text-primary mb-2">150+</div>
-              <div className="text-muted-foreground">Partner Barbers</div>
+              <div className="text-muted-foreground">Partner Salons</div>
             </div>
             
             <div>
