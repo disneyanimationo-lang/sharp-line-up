@@ -246,17 +246,6 @@ const QueueStatus = ({ queueData, service, shop, onBack }) => {
           </div>
         </Card>
 
-        {/* Tips */}
-        <Card className="p-6 bg-secondary/30 border-border">
-          <h3 className="font-bold mb-3">💡 Tips</h3>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>• Keep this page open to track your position in real-time</li>
-            <li>• You'll get a notification when it's almost your turn</li>
-            <li>• Please arrive at the shop when you're in the top 2</li>
-            <li>• If you need to leave, click "Leave Queue" above</li>
-          </ul>
-        </Card>
-
         {/* Notification Settings */}
         <div className="mt-6 text-center">
           <Button variant="outline" className="border-border hover:bg-secondary">
