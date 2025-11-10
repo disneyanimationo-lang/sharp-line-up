@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/hooks/useMockAuth';
+import { mockDb } from '@/services/mockData';
 import { toast } from 'sonner';
 import { Scissors, Loader2, User, Store, Info } from 'lucide-react';
 const Auth = () => {
@@ -45,10 +46,16 @@ const Auth = () => {
     }
     toast.success('Welcome back!');
 
-    // Wait a moment for role to be checked
+    // Get user from auth context to check role
+    const existingUser = mockDb.getUserByEmail(loginData.email);
+    
+    // Redirect based on role
     setTimeout(() => {
-      // Redirect based on role will happen in useEffect
-      navigate('/');
+      if (existingUser?.role === 'shop_owner') {
+        navigate('/dashboard');
+      } else {
+        navigate('/customer');
+      }
     }, 500);
   };
   const handleSignup = async (e: React.FormEvent) => {
