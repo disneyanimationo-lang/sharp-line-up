@@ -2,17 +2,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scissors, User } from "lucide-react";
-
 const Welcome = () => {
   const navigate = useNavigate();
-
-  return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
+  return <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <div className="w-full max-w-4xl">
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-foreground mb-4">
-            Welcome to CutQueue
-          </h1>
+          <h1 className="text-5xl font-bold text-foreground mb-4">Welcome to Winqroo</h1>
           <p className="text-xl text-muted-foreground">
             Choose how you'd like to continue
           </p>
@@ -30,10 +25,10 @@ const Welcome = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
-              <Button size="lg" className="w-full" onClick={(e) => {
-                e.stopPropagation();
-                navigate("/customer");
-              }}>
+              <Button size="lg" className="w-full" onClick={e => {
+              e.stopPropagation();
+              navigate("/customer");
+            }}>
                 Continue as Customer
               </Button>
             </CardContent>
@@ -50,18 +45,16 @@ const Welcome = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
-              <Button size="lg" variant="secondary" className="w-full" onClick={(e) => {
-                e.stopPropagation();
-                navigate("/auth");
-              }}>
+              <Button size="lg" variant="secondary" className="w-full" onClick={e => {
+              e.stopPropagation();
+              navigate("/auth");
+            }}>
                 Continue as Owner
               </Button>
             </CardContent>
           </Card>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Welcome;
