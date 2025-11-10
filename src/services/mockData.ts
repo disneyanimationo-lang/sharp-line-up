@@ -54,7 +54,7 @@ const initializeData = () => {
       description: 'Premier barbershop in the heart of Delhi offering modern styles and traditional grooming',
       latitude: 28.6328,
       longitude: 77.2197,
-      distance: 1.2,
+      distance: 1.93,
       current_queue: 3,
       estimated_wait: 45,
       opening_hours: {
@@ -80,7 +80,7 @@ const initializeData = () => {
       description: 'Luxury grooming experience with celebrity stylists in Bandra',
       latitude: 19.0544,
       longitude: 72.8347,
-      distance: 2.5,
+      distance: 4.02,
       current_queue: 5,
       estimated_wait: 60,
       opening_hours: {
@@ -106,7 +106,7 @@ const initializeData = () => {
       description: 'Traditional Punjabi barbershop with modern amenities and expert barbers',
       latitude: 31.3260,
       longitude: 75.5762,
-      distance: 0.8,
+      distance: 1.29,
       current_queue: 2,
       estimated_wait: 30,
       opening_hours: {
@@ -132,7 +132,7 @@ const initializeData = () => {
       description: 'Upscale men\'s grooming lounge in trendy Indiranagar',
       latitude: 12.9716,
       longitude: 77.5946,
-      distance: 3.1,
+      distance: 4.99,
       current_queue: 4,
       estimated_wait: 50,
       opening_hours: {
@@ -158,7 +158,7 @@ const initializeData = () => {
       description: 'Family-friendly salon serving Chennai for over 20 years',
       latitude: 13.0843,
       longitude: 80.2705,
-      distance: 1.5,
+      distance: 2.41,
       current_queue: 1,
       estimated_wait: 20,
       opening_hours: {
@@ -184,7 +184,7 @@ const initializeData = () => {
       description: 'Award-winning salon specializing in beard artistry and contemporary styles',
       latitude: 23.0225,
       longitude: 72.5714,
-      distance: 0.6,
+      distance: 0.97,
       current_queue: 6,
       estimated_wait: 75,
       opening_hours: {
@@ -210,7 +210,7 @@ const initializeData = () => {
       description: 'Modern grooming studio with traditional hospitality in Jubilee Hills',
       latitude: 17.4065,
       longitude: 78.4772,
-      distance: 2.8,
+      distance: 4.51,
       current_queue: 2,
       estimated_wait: 35,
       opening_hours: {
@@ -236,7 +236,7 @@ const initializeData = () => {
       description: 'Heritage salon on iconic Park Street serving Kolkata since 1985',
       latitude: 22.5726,
       longitude: 88.3639,
-      distance: 1.9,
+      distance: 3.06,
       current_queue: 3,
       estimated_wait: 40,
       opening_hours: {

@@ -78,7 +78,7 @@ function MapContent({ shops, userLocation, onShopSelect }: {
               </div>
               <div style={{ display: 'flex', gap: 8, fontSize: 12, marginBottom: 8 }}>
                 <div>⭐ {shop.rating}</div>
-                {shop.distance !== null && <div>• {shop.distance} miles</div>}
+                {shop.distance !== null && <div>• {shop.distance} km</div>}
               </div>
               <div style={{ display: 'flex', gap: 12, fontSize: 12, marginBottom: 10 }}>
                 <div>Wait: {shop.estimated_wait || 0} min</div>

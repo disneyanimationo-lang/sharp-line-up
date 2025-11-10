@@ -176,7 +176,7 @@ const ShopList = ({ onShopSelect, onBack }) => {
                       <Star className="w-4 h-4 fill-primary text-primary" />
                       <span className="font-semibold">{shop.rating}</span>
                       {shop.distance !== null && (
-                        <span className="text-muted-foreground ml-2">• {shop.distance} miles</span>
+                        <span className="text-muted-foreground ml-2">• {shop.distance} km</span>
                       )}
                     </div>
                   </div>
