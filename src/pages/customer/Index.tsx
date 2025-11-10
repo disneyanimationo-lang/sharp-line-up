@@ -7,6 +7,7 @@ import ShopList from '@/components/customer/ShopList';
 import ServiceSelection from '@/components/customer/ServiceSelection';
 import QueueStatus from '@/components/customer/QueueStatus';
 import ProfileSettings from '@/components/customer/ProfileSettings';
+import ActiveQueueBanner from '@/components/customer/ActiveQueueBanner';
 import { useAuth } from '@/hooks/useMockAuth';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -46,6 +47,13 @@ const Index = () => {
     setSelectedService(null);
     setQueueData(null);
   };
+
+  const handleQueueClick = (queue: any, service: any, shop: any) => {
+    setQueueData(queue);
+    setSelectedService(service);
+    setSelectedShop(shop);
+    setView('queue');
+  };
   if (view === 'shops') {
     return <ShopList onShopSelect={handleShopSelect} onBack={() => setView('home')} />;
   }
@@ -68,6 +76,13 @@ const Index = () => {
           </div>
           
           <div className="flex items-center gap-3">
+            {user && !isShopOwner && (
+              <ActiveQueueBanner 
+                customerName={user.name} 
+                onQueueClick={handleQueueClick}
+              />
+            )}
+            
             {user ? (
               <>
                 {isShopOwner && (
