@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Star, Loader2, MessageSquare } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { mockDb } from '@/services/mockData';
 
 interface Review {
   id: string;
@@ -30,18 +30,23 @@ const ShopReviews = ({ shopId, shopRating }: ShopReviewsProps) => {
 
   const loadReviews = async () => {
     try {
-      const { data, error, count } = await supabase
-        .from('queues')
-        .select('id, customer_name, rating, review_text, completed_at, services(name)', { count: 'exact' })
-        .eq('shop_id', shopId)
-        .not('rating', 'is', null)
-        .order('completed_at', { ascending: false })
-        .limit(10);
+      const queues = mockDb.getQueues();
+      const shopQueues = queues
+        .filter((q: any) => q.shop_id === shopId && q.rating !== null && q.rating !== undefined)
+        .sort((a: any, b: any) => new Date(b.completed_at || 0).getTime() - new Date(a.completed_at || 0).getTime())
+        .slice(0, 10);
+      
+      // Enrich with service info
+      const enrichedReviews = shopQueues.map((q: any) => {
+        const service = mockDb.getService(q.service_id);
+        return {
+          ...q,
+          services: { name: service?.name || 'Service' }
+        };
+      });
 
-      if (error) throw error;
-
-      setReviews(data || []);
-      setTotalReviews(count || 0);
+      setReviews(enrichedReviews);
+      setTotalReviews(queues.filter((q: any) => q.shop_id === shopId && q.rating).length);
     } catch (error) {
       console.error('Error loading reviews:', error);
     } finally {

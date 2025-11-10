@@ -3,9 +3,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Clock, Users, CheckCircle, Star } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import RatingDialog from './RatingDialog';
+import { mockDb } from '@/services/mockData';
 
 const QueueStatus = ({ queueData, service, shop, onBack }) => {
   const services = Array.isArray(service) ? service : [service];
@@ -22,66 +22,52 @@ const QueueStatus = ({ queueData, service, shop, onBack }) => {
     // Load initial live queue
     loadLiveQueue();
 
-    // Subscribe to real-time updates for this queue entry
-    const channel = supabase
-      .channel('queue-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'queues',
-          filter: `id=eq.${queueData.id}`
-        },
-        (payload) => {
-          const updatedQueue = payload.new;
-          setCurrentPosition(updatedQueue.position);
-          setEstimatedWait(updatedQueue.estimated_wait);
-          setQueueStatus(updatedQueue.status);
-          
-          if (updatedQueue.position === 1 && updatedQueue.status === 'waiting') {
-            toast.success("You're next! Please head to the shop.");
-          }
-          
-          if (updatedQueue.status === 'completed' && !hasRated) {
-            toast.success('Service completed! Please rate your experience.');
-            setShowRatingDialog(true);
-          }
+    // Poll for updates every 3 seconds
+    const interval = setInterval(() => {
+      const queue = mockDb.getQueue(queueData.id);
+      if (queue) {
+        setCurrentPosition(queue.position);
+        setEstimatedWait(queue.estimated_wait);
+        setQueueStatus(queue.status);
+        
+        if (queue.position === 1 && queue.status === 'waiting') {
+          toast.success("You're next! Please head to the shop.");
         }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'queues',
-          filter: `shop_id=eq.${shop.id}`
-        },
-        () => {
-          // Reload live queue on any change
-          loadLiveQueue();
+        
+        if (queue.status === 'completed' && !hasRated) {
+          toast.success('Service completed! Please rate your experience.');
+          setShowRatingDialog(true);
         }
-      )
-      .subscribe();
+      }
+      loadLiveQueue();
+    }, 3000);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => clearInterval(interval);
   }, [queueData?.id, hasRated, shop?.id]);
 
   const loadLiveQueue = async () => {
     if (!shop?.id) return;
 
     try {
-      const { data, error } = await supabase
-        .from('queues')
-        .select('id, customer_name, position, status, queue_services(services(name))')
-        .eq('shop_id', shop.id)
-        .eq('status', 'waiting')
-        .order('position');
-
-      if (error) throw error;
-      setLiveQueue(data || []);
+      const queues = mockDb.getQueuesByShop(shop.id);
+      const waitingQueues = queues
+        .filter((q: any) => q.status === 'waiting')
+        .sort((a: any, b: any) => a.position - b.position);
+      
+      // Enrich with services info
+      const enrichedQueues = waitingQueues.map((q: any) => {
+        const queueServices = mockDb.getQueueServicesForQueue(q.id);
+        const services = queueServices.map((qs: any) => {
+          const service = mockDb.getService(qs.service_id);
+          return { services: { name: service?.name || 'Service' } };
+        });
+        return {
+          ...q,
+          queue_services: services
+        };
+      });
+      
+      setLiveQueue(enrichedQueues);
     } catch (error) {
       console.error('Error loading live queue:', error);
     }

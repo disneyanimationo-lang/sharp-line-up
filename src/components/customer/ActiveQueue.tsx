@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Clock, Users, Edit2, Save, X, Loader2, CheckCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { getActiveQueue, updateQueueServices } from '@/services/mockActiveQueueApi';
+import { getShopServices, cancelQueue } from '@/services/mockQueueApi';
 import { toast } from 'sonner';
 
 interface Service {
@@ -32,39 +33,18 @@ const ActiveQueue = ({ customerName, onQueueCancelled }: ActiveQueueProps) => {
 
   useEffect(() => {
     loadActiveQueue();
-    const channel = supabase
-      .channel('active-queue-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'queues',
-        },
-        (payload) => {
-          if (payload.new.customer_name === customerName) {
-            loadActiveQueue();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    
+    // Poll for updates every 5 seconds
+    const interval = setInterval(loadActiveQueue, 5000);
+    
+    return () => clearInterval(interval);
   }, [customerName]);
 
   const loadActiveQueue = async () => {
     try {
-      // Get active queue entry
-      const { data: queue, error: queueError } = await supabase
-        .from('queues')
-        .select('*, shops(name), queue_services(services(*))')
-        .eq('customer_name', customerName)
-        .in('status', ['waiting', 'in_progress'])
-        .maybeSingle();
+      const { data: queue, error: queueError } = await getActiveQueue(customerName);
 
-      if (queueError) throw queueError;
+      if (queueError) throw new Error(queueError);
 
       if (!queue) {
         setQueueData(null);
@@ -80,16 +60,12 @@ const ActiveQueue = ({ customerName, onQueueCancelled }: ActiveQueueProps) => {
       setSelectedServiceIds(services.map((s: Service) => s.id));
 
       // Load all available services for this shop
-      const { data: shopServices, error: servicesError } = await supabase
-        .from('shop_services')
-        .select('services(*)')
-        .eq('shop_id', queue.shop_id);
+      const { data: shopServices, error: servicesError } = await getShopServices(queue.shop_id);
 
-      if (servicesError) throw servicesError;
+      if (servicesError) throw new Error(servicesError);
 
-      const allServices = shopServices?.map((ss: any) => ss.services) || [];
-      setAvailableServices(allServices);
-    } catch (error) {
+      setAvailableServices(shopServices || []);
+    } catch (error: any) {
       console.error('Error loading active queue:', error);
       toast.error('Failed to load queue information');
     } finally {
@@ -118,60 +94,10 @@ const ActiveQueue = ({ customerName, onQueueCancelled }: ActiveQueueProps) => {
       console.log('Starting service update for queue:', queueData.id);
       console.log('Selected service IDs:', selectedServiceIds);
 
-      // Delete existing queue_services
-      const { error: deleteError, count: deleteCount } = await supabase
-        .from('queue_services')
-        .delete({ count: 'exact' })
-        .eq('queue_id', queueData.id);
+      const { error } = await updateQueueServices(queueData.id, selectedServiceIds);
 
-      console.log('Delete result:', { deleteError, deleteCount });
-
-      if (deleteError) {
-        console.error('Delete error:', deleteError);
-        throw deleteError;
-      }
-
-      // Insert new queue_services
-      const queueServices = selectedServiceIds.map(serviceId => ({
-        queue_id: queueData.id,
-        service_id: serviceId,
-      }));
-
-      console.log('Inserting queue services:', queueServices);
-
-      const { error: insertError, data: insertData } = await supabase
-        .from('queue_services')
-        .insert(queueServices)
-        .select();
-
-      console.log('Insert result:', { insertError, insertData });
-
-      if (insertError) {
-        console.error('Insert error:', insertError);
-        throw insertError;
-      }
-
-      // Calculate new estimated wait time
-      const selectedServices = availableServices.filter(s => selectedServiceIds.includes(s.id));
-      const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
-      const newEstimatedWait = queueData.position * totalDuration;
-
-      console.log('Updating queue with estimated wait:', newEstimatedWait);
-
-      // Update queue entry
-      const { error: updateError } = await supabase
-        .from('queues')
-        .update({
-          estimated_wait: newEstimatedWait,
-          service_id: selectedServiceIds[0], // Update primary service
-        })
-        .eq('id', queueData.id);
-
-      console.log('Update result:', { updateError });
-
-      if (updateError) {
-        console.error('Update error:', updateError);
-        throw updateError;
+      if (error) {
+        throw new Error(error);
       }
 
       console.log('Services updated successfully!');
@@ -180,15 +106,7 @@ const ActiveQueue = ({ customerName, onQueueCancelled }: ActiveQueueProps) => {
       await loadActiveQueue();
     } catch (error: any) {
       console.error('Error updating services:', error);
-      
-      // Provide more specific error messages
-      if (error.code === '23505') {
-        toast.error('Duplicate service detected. Please try again.');
-      } else if (error.code === '42501') {
-        toast.error('Permission denied. Please refresh and try again.');
-      } else {
-        toast.error(`Failed to update services: ${error.message || 'Unknown error'}`);
-      }
+      toast.error(`Failed to update services: ${error.message || 'Unknown error'}`);
     } finally {
       setSaving(false);
     }
@@ -196,17 +114,14 @@ const ActiveQueue = ({ customerName, onQueueCancelled }: ActiveQueueProps) => {
 
   const handleCancelQueue = async () => {
     try {
-      const { error } = await supabase
-        .from('queues')
-        .update({ status: 'cancelled' })
-        .eq('id', queueData.id);
+      const { error } = await cancelQueue(queueData.id);
 
-      if (error) throw error;
+      if (error) throw new Error(error);
 
       toast.success('Queue entry cancelled');
       setQueueData(null);
       onQueueCancelled?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cancelling queue:', error);
       toast.error('Failed to cancel queue entry');
     }
