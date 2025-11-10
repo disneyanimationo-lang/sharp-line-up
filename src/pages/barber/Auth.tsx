@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useMockAuth';
 import { toast } from 'sonner';
 import { Scissors, Loader2, User, Store } from 'lucide-react';
 

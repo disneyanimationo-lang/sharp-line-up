@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, Scissors, Loader2 } from 'lucide-react';
-import { getShopServices, joinQueue } from '@/services/queueApi';
-import { getActiveQueue } from '@/services/activeQueueApi';
-import { useAuth } from '@/hooks/useAuth';
+import { getShopServices, joinQueue } from '@/services/mockQueueApi';
+import { getActiveQueue } from '@/services/mockActiveQueueApi';
+import { useAuth } from '@/hooks/useMockAuth';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ShopReviews from './ShopReviews';
 import QueueRestrictionBanner from './QueueRestrictionBanner';
@@ -36,32 +35,16 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
 
   const loadUserProfile = async () => {
     if (!user) return;
-    
-    const { data } = await supabase
-      .from('profiles')
-      .select('name')
-      .eq('id', user.id)
-      .single();
-    
-    if (data) {
-      setCustomerName(data.name);
-    }
+    setCustomerName(user.name || user.email);
   };
 
   const checkExistingQueue = async () => {
     if (!user) return;
     
-    const { data } = await supabase
-      .from('profiles')
-      .select('name')
-      .eq('id', user.id)
-      .single();
-    
-    if (data?.name) {
-      const { data: queueData } = await getActiveQueue(data.name);
-      if (queueData && queueData.shop_id !== shop.id) {
-        setExistingQueue(queueData);
-      }
+    const userName = user.name || user.email;
+    const { data: queueData } = await getActiveQueue(userName);
+    if (queueData && queueData.shop_id !== shop.id) {
+      setExistingQueue(queueData);
     }
   };
 

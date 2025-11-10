@@ -4,11 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MapPin, Star, Clock, Search, Loader2, ArrowLeft, AlertCircle, Map as MapIcon, List } from 'lucide-react';
-import { getShops } from '@/services/queueApi';
-import { getActiveQueue } from '@/services/activeQueueApi';
-import { useAuth } from '@/hooks/useAuth';
+import { getShops } from '@/services/mockQueueApi';
+import { getActiveQueue } from '@/services/mockActiveQueueApi';
+import { useAuth } from '@/hooks/useMockAuth';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ActiveQueue from './ActiveQueue';
 import { useGeolocation } from '@/hooks/useGeolocation';
@@ -40,20 +39,12 @@ const ShopList = ({ onShopSelect, onBack }) => {
   const loadUserProfile = async () => {
     if (!user) return;
     
-    const { data } = await supabase
-      .from('profiles')
-      .select('name')
-      .eq('id', user.id)
-      .single();
+    setCustomerName(user.name || user.email);
     
-    if (data?.name) {
-      setCustomerName(data.name);
-      
-      // Check if user has an active queue
-      const { data: queueData } = await getActiveQueue(data.name);
-      if (queueData) {
-        setShowActiveQueue(true);
-      }
+    // Check if user has an active queue
+    const { data: queueData } = await getActiveQueue(user.name || user.email);
+    if (queueData) {
+      setShowActiveQueue(true);
     }
   };
 

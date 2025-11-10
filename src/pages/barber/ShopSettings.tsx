@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
+import { mockDb } from '@/services/mockData';
 import { toast } from 'sonner';
 import { Loader2, Save, Store } from 'lucide-react';
 
@@ -30,23 +30,20 @@ const ShopSettings = () => {
     loadShop();
   }, []);
 
-  const loadShop = async () => {
+  const loadShop = () => {
     try {
-      const { data: shopOwnerData } = await supabase
-        .from('shop_owners')
-        .select('shop_id')
-        .single();
+      const shopOwners = mockDb.getShopOwners();
+      if (!shopOwners || shopOwners.length === 0) {
+        setLoading(false);
+        return;
+      }
 
-      if (!shopOwnerData) return;
-
-      const { data, error } = await supabase
-        .from('shops')
-        .select('*')
-        .eq('id', shopOwnerData.shop_id)
-        .single();
-
-      if (error) throw error;
-      setShop(data as unknown as Shop);
+      const shopOwner = shopOwners[0];
+      const shopData = mockDb.getShop(shopOwner.shop_id);
+      
+      if (shopData) {
+        setShop(shopData as unknown as Shop);
+      }
     } catch (error) {
       console.error('Error loading shop:', error);
       toast.error('Failed to load shop details');
@@ -55,51 +52,39 @@ const ShopSettings = () => {
     }
   };
 
-  const handleCreateShop = async (e: React.FormEvent) => {
+  const handleCreateShop = (e: React.FormEvent) => {
     e.preventDefault();
     setIsCreating(true);
     
     try {
-      // Generate a unique QR code
       const qrCode = `SHOP_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Create shop
-      const { data: shopData, error: shopError } = await supabase
-        .from('shops')
-        .insert({
-          name: 'My Barber Shop',
-          address: '',
-          qr_code: qrCode,
-          rating: 4.5,
-          phone: '',
-          description: '',
-          opening_hours: {
-            monday: '9:00 AM - 6:00 PM',
-            tuesday: '9:00 AM - 6:00 PM',
-            wednesday: '9:00 AM - 6:00 PM',
-            thursday: '9:00 AM - 6:00 PM',
-            friday: '9:00 AM - 6:00 PM',
-            saturday: '9:00 AM - 5:00 PM',
-            sunday: 'Closed'
-          }
-        })
-        .select()
-        .single();
+      const newShop = mockDb.createShop({
+        name: 'My Barber Shop',
+        address: '',
+        qr_code: qrCode,
+        rating: 4.5,
+        phone: '',
+        description: '',
+        opening_hours: {
+          monday: '9:00 AM - 6:00 PM',
+          tuesday: '9:00 AM - 6:00 PM',
+          wednesday: '9:00 AM - 6:00 PM',
+          thursday: '9:00 AM - 6:00 PM',
+          friday: '9:00 AM - 6:00 PM',
+          saturday: '9:00 AM - 5:00 PM',
+          sunday: 'Closed'
+        }
+      });
 
-      if (shopError) throw shopError;
-
-      // Link shop to owner
-      const { error: linkError } = await supabase
-        .from('shop_owners')
-        .insert({
-          shop_id: shopData.id,
-          user_id: (await supabase.auth.getUser()).data.user?.id
-        });
-
-      if (linkError) throw linkError;
+      // Link shop to current user (assuming user1 is shop owner)
+      mockDb.createShopOwner({
+        shop_id: newShop.id,
+        user_id: 'user1',
+      });
 
       toast.success('Shop created successfully!');
-      setShop(shopData as unknown as Shop);
+      setShop(newShop as unknown as Shop);
     } catch (error) {
       console.error('Error creating shop:', error);
       toast.error('Failed to create shop');
@@ -108,24 +93,19 @@ const ShopSettings = () => {
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!shop) return;
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('shops')
-        .update({
-          name: shop.name,
-          address: shop.address,
-          phone: shop.phone,
-          description: shop.description,
-          opening_hours: shop.opening_hours,
-        })
-        .eq('id', shop.id);
-
-      if (error) throw error;
+      mockDb.updateShop(shop.id, {
+        name: shop.name,
+        address: shop.address,
+        phone: shop.phone,
+        description: shop.description,
+        opening_hours: shop.opening_hours,
+      });
       toast.success('Shop details updated successfully');
     } catch (error) {
       console.error('Error saving shop:', error);

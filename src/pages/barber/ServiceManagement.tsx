@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
+import { mockDb } from '@/services/mockData';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,8 @@ interface Service {
   duration: number;
   price: number;
   description: string;
+  is_custom?: boolean;
+  shop_id?: string | null;
   isOffered?: boolean;
   customPrice?: number;
   customDuration?: number;
@@ -45,34 +47,30 @@ const ServiceManagement = () => {
     loadServices();
   }, []);
 
-  const loadServices = async () => {
+  const loadServices = () => {
     try {
-      const { data: shopOwnerData } = await supabase
-        .from('shop_owners')
-        .select('shop_id')
-        .single();
+      const shopOwners = mockDb.getShopOwners();
+      if (!shopOwners || shopOwners.length === 0) {
+        setLoading(false);
+        return;
+      }
 
-      if (!shopOwnerData) return;
-      setShopId(shopOwnerData.shop_id);
+      const shopOwner = shopOwners[0];
+      setShopId(shopOwner.shop_id);
 
       // Get all available services (global + custom for this shop)
-      const { data: services } = await supabase
-        .from('services')
-        .select('*')
-        .or(`shop_id.is.null,shop_id.eq.${shopOwnerData.shop_id}`)
-        .order('name');
-
-      // Get services offered by this shop with custom pricing
-      const { data: shopServices } = await supabase
-        .from('shop_services')
-        .select('id, service_id, custom_price, custom_duration')
-        .eq('shop_id', shopOwnerData.shop_id);
-
-      const shopServiceMap = new Map(
-        shopServices?.map(s => [s.service_id, s]) || []
+      const allServicesData = mockDb.getServices();
+      const services = allServicesData.filter((s: any) => 
+        !s.shop_id || s.shop_id === shopOwner.shop_id
       );
 
-      const servicesWithStatus = services?.map(service => {
+      // Get services offered by this shop with custom pricing
+      const shopServices = mockDb.getShopServicesForShop(shopOwner.shop_id);
+      const shopServiceMap = new Map(
+        shopServices.map((s: any) => [s.service_id, s])
+      );
+
+      const servicesWithStatus = services.map((service: any) => {
         const shopService = shopServiceMap.get(service.id);
         return {
           ...service,
@@ -81,7 +79,10 @@ const ServiceManagement = () => {
           customDuration: shopService?.custom_duration ?? undefined,
           shopServiceId: shopService?.id,
         };
-      }) || [];
+      });
+
+      // Sort by name
+      servicesWithStatus.sort((a: any, b: any) => a.name.localeCompare(b.name));
 
       setAllServices(servicesWithStatus);
     } catch (error) {
@@ -92,15 +93,11 @@ const ServiceManagement = () => {
     }
   };
 
-  const addService = async (serviceId: string) => {
+  const addService = (serviceId: string) => {
     if (!shopId) return;
 
     try {
-      const { error } = await supabase
-        .from('shop_services')
-        .insert({ shop_id: shopId, service_id: serviceId });
-
-      if (error) throw error;
+      mockDb.addShopService({ shop_id: shopId, service_id: serviceId });
       toast.success('Service added successfully');
       loadServices();
     } catch (error) {
@@ -109,17 +106,11 @@ const ServiceManagement = () => {
     }
   };
 
-  const removeService = async (serviceId: string) => {
+  const removeService = (serviceId: string) => {
     if (!shopId) return;
 
     try {
-      const { error } = await supabase
-        .from('shop_services')
-        .delete()
-        .eq('shop_id', shopId)
-        .eq('service_id', serviceId);
-
-      if (error) throw error;
+      mockDb.deleteShopService(shopId, serviceId);
       toast.success('Service removed successfully');
       loadServices();
     } catch (error) {
@@ -134,19 +125,14 @@ const ServiceManagement = () => {
     setEditDuration((service.customDuration ?? service.duration).toString());
   };
 
-  const saveServiceEdit = async () => {
+  const saveServiceEdit = () => {
     if (!editingService?.shopServiceId) return;
 
     try {
-      const { error } = await supabase
-        .from('shop_services')
-        .update({
-          custom_price: editPrice ? parseFloat(editPrice) : null,
-          custom_duration: editDuration ? parseInt(editDuration) : null,
-        })
-        .eq('id', editingService.shopServiceId);
-
-      if (error) throw error;
+      mockDb.updateShopService(editingService.shopServiceId, {
+        custom_price: editPrice ? parseFloat(editPrice) : null,
+        custom_duration: editDuration ? parseInt(editDuration) : null,
+      });
       toast.success('Service updated successfully');
       setEditingService(null);
       loadServices();
@@ -156,38 +142,27 @@ const ServiceManagement = () => {
     }
   };
 
-  const createCustomService = async () => {
+  const createCustomService = () => {
     if (!shopId || !newServiceName || !newServiceDuration || !newServicePrice) {
       toast.error('Please fill in all fields');
       return;
     }
 
     try {
-      // Create the custom service
-      const { data: newService, error: serviceError } = await supabase
-        .from('services')
-        .insert({
-          name: newServiceName,
-          description: newServiceDescription || `Custom ${newServiceName} service`,
-          duration: parseInt(newServiceDuration),
-          price: parseFloat(newServicePrice),
-          is_custom: true,
-          shop_id: shopId,
-        })
-        .select()
-        .single();
-
-      if (serviceError) throw serviceError;
+      const newService = mockDb.createService({
+        name: newServiceName,
+        description: newServiceDescription || `Custom ${newServiceName} service`,
+        duration: parseInt(newServiceDuration),
+        price: parseFloat(newServicePrice),
+        is_custom: true,
+        shop_id: shopId,
+      });
 
       // Automatically add it to shop_services
-      const { error: shopServiceError } = await supabase
-        .from('shop_services')
-        .insert({
-          shop_id: shopId,
-          service_id: newService.id,
-        });
-
-      if (shopServiceError) throw shopServiceError;
+      mockDb.addShopService({
+        shop_id: shopId,
+        service_id: newService.id,
+      });
 
       toast.success('Custom service created successfully');
       setIsCreatingService(false);
@@ -202,14 +177,9 @@ const ServiceManagement = () => {
     }
   };
 
-  const deleteCustomService = async (serviceId: string) => {
+  const deleteCustomService = (serviceId: string) => {
     try {
-      const { error } = await supabase
-        .from('services')
-        .delete()
-        .eq('id', serviceId);
-
-      if (error) throw error;
+      mockDb.deleteService(serviceId);
       toast.success('Custom service deleted successfully');
       loadServices();
     } catch (error) {
@@ -245,7 +215,7 @@ const ServiceManagement = () => {
             <div className="flex justify-between items-start mb-3">
               <div>
                 <h3 className="text-lg font-bold">{service.name}</h3>
-                {(service as any).is_custom && (
+                {service.is_custom && (
                   <Badge variant="outline" className="mt-1">Custom</Badge>
                 )}
               </div>
@@ -297,7 +267,7 @@ const ServiceManagement = () => {
                   size="sm"
                   className="flex-1"
                   onClick={() => {
-                    if ((service as any).is_custom) {
+                    if (service.is_custom) {
                       deleteCustomService(service.id);
                     } else {
                       removeService(service.id);
@@ -305,7 +275,7 @@ const ServiceManagement = () => {
                   }}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  {(service as any).is_custom ? 'Delete' : 'Remove'}
+                  {service.is_custom ? 'Delete' : 'Remove'}
                 </Button>
               </div>
             ) : (

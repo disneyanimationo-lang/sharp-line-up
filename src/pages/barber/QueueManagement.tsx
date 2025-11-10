@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
+import { mockDb } from '@/services/mockData';
 import { toast } from 'sonner';
 import { CheckCircle, XCircle, ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
 
@@ -32,57 +32,45 @@ const QueueManagement = () => {
 
   useEffect(() => {
     loadQueue();
-    setupRealtimeSubscription();
+    // Poll for updates every 3 seconds
+    const interval = setInterval(loadQueue, 3000);
+    return () => clearInterval(interval);
   }, []);
 
-  const setupRealtimeSubscription = async () => {
-    const { data: shopOwnerData } = await supabase
-      .from('shop_owners')
-      .select('shop_id')
-      .single();
-
-    if (!shopOwnerData) return;
-    setShopId(shopOwnerData.shop_id);
-
-    const channel = supabase
-      .channel('queue-management')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'queues',
-          filter: `shop_id=eq.${shopOwnerData.shop_id}`,
-        },
-        () => {
-          loadQueue();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
-
-  const loadQueue = async () => {
+  const loadQueue = () => {
     try {
-      const { data: shopOwnerData } = await supabase
-        .from('shop_owners')
-        .select('shop_id')
-        .single();
+      const shopOwners = mockDb.getShopOwners();
+      if (!shopOwners || shopOwners.length === 0) {
+        setLoading(false);
+        return;
+      }
 
-      if (!shopOwnerData) return;
+      const shopOwner = shopOwners[0];
+      setShopId(shopOwner.shop_id);
 
-      const { data, error } = await supabase
-        .from('queues')
-        .select('*, services(name, duration, price), queue_services(services(name, duration, price))')
-        .eq('shop_id', shopOwnerData.shop_id)
-        .eq('status', 'waiting')
-        .order('position');
+      const allQueues = mockDb.getQueuesByShop(shopOwner.shop_id);
+      const waitingQueues = allQueues.filter((q: any) => q.status === 'waiting');
 
-      if (error) throw error;
-      setQueue(data || []);
+      // Enrich with services data
+      const enrichedQueues = waitingQueues.map((q: any) => {
+        const primaryService = mockDb.getService(q.service_id);
+        const queueServices = mockDb.getQueueServicesForQueue(q.id);
+        const services = queueServices.map((qs: any) => {
+          const service = mockDb.getService(qs.service_id);
+          return service ? { services: service } : null;
+        }).filter(Boolean);
+
+        return {
+          ...q,
+          services: primaryService,
+          queue_services: services,
+        };
+      });
+
+      // Sort by position
+      enrichedQueues.sort((a: any, b: any) => a.position - b.position);
+
+      setQueue(enrichedQueues as QueueEntry[]);
     } catch (error) {
       console.error('Error loading queue:', error);
       toast.error('Failed to load queue');
@@ -91,64 +79,58 @@ const QueueManagement = () => {
     }
   };
 
-  const markAsComplete = async (queueId: string) => {
+  const markAsComplete = (queueId: string) => {
     try {
-      const { error } = await supabase
-        .from('queues')
-        .update({ status: 'completed', completed_at: new Date().toISOString() })
-        .eq('id', queueId);
-
-      if (error) throw error;
+      mockDb.updateQueue(queueId, { status: 'completed', completed_at: new Date().toISOString() });
       toast.success('Customer marked as complete');
+      loadQueue();
     } catch (error) {
       console.error('Error marking complete:', error);
       toast.error('Failed to update queue');
     }
   };
 
-  const cancelEntry = async (queueId: string) => {
+  const cancelEntry = (queueId: string) => {
     try {
-      const { error } = await supabase
-        .from('queues')
-        .update({ status: 'cancelled' })
-        .eq('id', queueId);
-
-      if (error) throw error;
+      mockDb.updateQueue(queueId, { status: 'cancelled' });
       toast.success('Queue entry cancelled');
+      loadQueue();
     } catch (error) {
       console.error('Error cancelling:', error);
       toast.error('Failed to cancel entry');
     }
   };
 
-  const moveUp = async (entry: QueueEntry) => {
+  const moveUp = (entry: QueueEntry) => {
     if (entry.position === 1) return;
     
     try {
       const prevEntry = queue.find(q => q.position === entry.position - 1);
       if (!prevEntry) return;
 
-      await supabase.from('queues').update({ position: entry.position }).eq('id', prevEntry.id);
-      await supabase.from('queues').update({ position: entry.position - 1 }).eq('id', entry.id);
+      mockDb.updateQueue(prevEntry.id, { position: entry.position });
+      mockDb.updateQueue(entry.id, { position: entry.position - 1 });
       
       toast.success('Position updated');
+      loadQueue();
     } catch (error) {
       console.error('Error moving up:', error);
       toast.error('Failed to update position');
     }
   };
 
-  const moveDown = async (entry: QueueEntry) => {
+  const moveDown = (entry: QueueEntry) => {
     if (entry.position === queue.length) return;
     
     try {
       const nextEntry = queue.find(q => q.position === entry.position + 1);
       if (!nextEntry) return;
 
-      await supabase.from('queues').update({ position: entry.position }).eq('id', nextEntry.id);
-      await supabase.from('queues').update({ position: entry.position + 1 }).eq('id', entry.id);
+      mockDb.updateQueue(nextEntry.id, { position: entry.position });
+      mockDb.updateQueue(entry.id, { position: entry.position + 1 });
       
       toast.success('Position updated');
+      loadQueue();
     } catch (error) {
       console.error('Error moving down:', error);
       toast.error('Failed to update position');
@@ -202,13 +184,13 @@ const QueueManagement = () => {
                           ₹{entry.queue_services.reduce((sum, qs) => sum + qs.services.price, 0)}
                         </p>
                       </>
-                    ) : (
+                    ) : entry.services ? (
                       <>
                         <p>Service: <span className="text-foreground font-semibold">{entry.services.name}</span></p>
                         <p>Duration: {entry.services.duration} min</p>
                         <p>Price: ₹{entry.services.price}</p>
                       </>
-                    )}
+                    ) : null}
                     <p>Wait Time: ~{entry.estimated_wait} min</p>
                     <p className="text-sm">Joined: {new Date(entry.joined_at).toLocaleTimeString()}</p>
                   </div>

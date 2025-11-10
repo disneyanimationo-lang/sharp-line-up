@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Star, Sparkles } from 'lucide-react';
-import { submitRating } from '@/services/queueApi';
+import { submitRating } from '@/services/mockQueueApi';
 import { toast } from 'sonner';
 
 interface RatingDialogProps {
