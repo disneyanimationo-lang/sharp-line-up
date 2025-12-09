@@ -1,22 +1,42 @@
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Clock, Scissors, Loader2 } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Clock, Scissors, Loader2, CreditCard, Wallet, Receipt, Crown, Zap, Star } from 'lucide-react';
 import { getShopServices, joinQueue } from '@/services/mockQueueApi';
 import { getActiveQueue } from '@/services/mockActiveQueueApi';
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from '@/hooks/useMockAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import ShopReviews from './ShopReviews';
 import QueueRestrictionBanner from './QueueRestrictionBanner';
+import { cn } from "@/lib/utils";
 
-const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
-  const [services, setServices] = useState([]);
+const PAYMENT_OPTIONS = [
+  { value: 'pay_now', label: 'Pay Now', icon: CreditCard, description: 'Pay online instantly (mock)' },
+  { value: 'pay_at_shop', label: 'Pay at Shop', icon: Wallet, description: 'Pay when you arrive' },
+  { value: 'pay_after_service', label: 'Pay After Service', icon: Receipt, description: 'Pay after your service is complete' },
+];
+
+const PRIORITY_OPTIONS = [
+  { value: 'regular', label: 'Regular', icon: Star, description: 'Standard queue position', color: 'bg-muted' },
+  { value: 'emergency', label: 'Emergency', icon: Zap, description: 'Wedding, Interview (same day priority)', color: 'bg-amber-500/20 text-amber-500', extra: '+₹100' },
+];
+
+const ServiceSelection = ({ shop, onServiceSelect, onBack }: any) => {
+  const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedServices, setSelectedServices] = useState([]);
+  const [selectedServices, setSelectedServices] = useState<any[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [joining, setJoining] = useState(false);
-  const [existingQueue, setExistingQueue] = useState(null);
+  const [existingQueue, setExistingQueue] = useState<any>(null);
+  const [paymentOption, setPaymentOption] = useState('pay_at_shop');
+  const [priorityType, setPriorityType] = useState('regular');
+  const [emergencyReason, setEmergencyReason] = useState('');
+  const [loyaltyInfo, setLoyaltyInfo] = useState<{ visit_count: number; is_vip: boolean } | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -31,11 +51,31 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
     loadServices();
     loadUserProfile();
     checkExistingQueue();
+    loadLoyaltyInfo();
   }, [shop.id, user]);
 
   const loadUserProfile = async () => {
     if (!user) return;
     setCustomerName(user.name || user.email);
+  };
+
+  const loadLoyaltyInfo = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('customer_loyalty')
+        .select('visit_count, is_vip')
+        .eq('user_id', user.id)
+        .eq('shop_id', shop.id)
+        .maybeSingle();
+
+      if (!error && data) {
+        setLoyaltyInfo(data);
+      }
+    } catch (error) {
+      console.error('Error loading loyalty info:', error);
+    }
   };
 
   const checkExistingQueue = async () => {
@@ -57,7 +97,7 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
     setLoading(false);
   };
 
-  const handleServiceToggle = (service) => {
+  const handleServiceToggle = (service: any) => {
     setSelectedServices(prev => {
       const isSelected = prev.some(s => s.id === service.id);
       if (isSelected) {
@@ -73,7 +113,16 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
   };
 
   const getTotalPrice = () => {
-    return selectedServices.reduce((sum, service) => sum + service.price, 0);
+    let total = selectedServices.reduce((sum, service) => sum + service.price, 0);
+    if (priorityType === 'emergency') total += 100;
+    return total;
+  };
+
+  const getPriorityLevel = () => {
+    if (loyaltyInfo?.is_vip) return 'vip';
+    if (priorityType === 'emergency') return 'emergency';
+    if (loyaltyInfo && loyaltyInfo.visit_count >= 5) return 'loyalty';
+    return 'regular';
   };
 
   const handleJoinQueue = async () => {
@@ -129,12 +178,26 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
           onClick={onBack}
         >
           <ArrowLeft className="mr-2 w-5 h-5" />
-          Back to Shops
+          Back
         </Button>
 
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">{shop.name}</h1>
-          <p className="text-xl text-muted-foreground">Select a service to join the queue</p>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-4xl font-bold">{shop.name}</h1>
+            {loyaltyInfo?.is_vip && (
+              <Badge className="bg-gradient-to-r from-amber-500 to-yellow-400 text-black">
+                <Crown className="w-3 h-3 mr-1" />
+                VIP Member
+              </Badge>
+            )}
+          </div>
+          <p className="text-xl text-muted-foreground">Select services to join the queue</p>
+          {loyaltyInfo && !loyaltyInfo.is_vip && (
+            <p className="text-sm text-muted-foreground mt-1">
+              <Star className="w-4 h-4 inline mr-1 text-primary" />
+              {loyaltyInfo.visit_count} visits • {10 - loyaltyInfo.visit_count} more for VIP status
+            </p>
+          )}
         </div>
 
         {/* Queue Restriction Warning */}
@@ -204,12 +267,94 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
               })}
             </div>
 
+            {/* Priority Selection */}
+            {selectedServices.length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-xl font-bold mb-4">Priority Type</h2>
+                <Card className="p-6">
+                  {loyaltyInfo?.is_vip ? (
+                    <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-amber-500/20 to-yellow-400/20 rounded-lg border border-amber-500/30">
+                      <Crown className="w-8 h-8 text-amber-500" />
+                      <div>
+                        <p className="font-bold text-amber-500">VIP Priority Active</p>
+                        <p className="text-sm text-muted-foreground">You'll skip the regular queue automatically</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <RadioGroup value={priorityType} onValueChange={setPriorityType} className="space-y-3">
+                      {PRIORITY_OPTIONS.map((option) => (
+                        <div key={option.value} className="flex items-center space-x-3">
+                          <RadioGroupItem value={option.value} id={`queue-${option.value}`} />
+                          <Label htmlFor={`queue-${option.value}`} className="flex-1 cursor-pointer">
+                            <div className="flex items-center gap-2">
+                              <option.icon className="w-5 h-5" />
+                              <span className="font-medium">{option.label}</span>
+                              {option.extra && (
+                                <Badge variant="secondary" className={option.color}>{option.extra}</Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">{option.description}</p>
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  )}
+                  
+                  {priorityType === 'emergency' && (
+                    <div className="mt-4">
+                      <Label>Reason (optional)</Label>
+                      <input
+                        type="text"
+                        value={emergencyReason}
+                        onChange={(e) => setEmergencyReason(e.target.value)}
+                        placeholder="e.g., Wedding, Job Interview"
+                        className="w-full mt-2 p-3 rounded-lg border border-border bg-background"
+                      />
+                    </div>
+                  )}
+                </Card>
+              </div>
+            )}
+
+            {/* Payment Selection */}
+            {selectedServices.length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-xl font-bold mb-4">Payment Option</h2>
+                <Card className="p-6">
+                  <RadioGroup value={paymentOption} onValueChange={setPaymentOption} className="space-y-3">
+                    {PAYMENT_OPTIONS.map((option) => (
+                      <div key={option.value} className="flex items-center space-x-3">
+                        <RadioGroupItem value={option.value} id={`queue-payment-${option.value}`} />
+                        <Label htmlFor={`queue-payment-${option.value}`} className="flex-1 cursor-pointer">
+                          <div className="flex items-center gap-2">
+                            <option.icon className="w-5 h-5" />
+                            <span className="font-medium">{option.label}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{option.description}</p>
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </Card>
+              </div>
+            )}
+
             {/* Confirm Section */}
             {selectedServices.length > 0 && (
               <div className="sticky bottom-6 bg-card border border-border rounded-lg p-6 shadow-lg">
                 <div className="space-y-4">
                   <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                    <p className="text-sm text-muted-foreground mb-2">Selected Services ({selectedServices.length}):</p>
+                    <div className="flex justify-between items-center mb-3">
+                      <p className="text-sm text-muted-foreground">Selected Services ({selectedServices.length})</p>
+                      <Badge className={cn(
+                        getPriorityLevel() === 'vip' && 'bg-gradient-to-r from-amber-500 to-yellow-400 text-black',
+                        getPriorityLevel() === 'emergency' && 'bg-amber-500',
+                        getPriorityLevel() === 'loyalty' && 'bg-green-500',
+                      )}>
+                        {getPriorityLevel() === 'vip' && <Crown className="w-3 h-3 mr-1" />}
+                        {getPriorityLevel().charAt(0).toUpperCase() + getPriorityLevel().slice(1)} Priority
+                      </Badge>
+                    </div>
                     <div className="space-y-1 mb-3">
                       {selectedServices.map(service => (
                         <div key={service.id} className="flex justify-between items-center">
@@ -217,12 +362,21 @@ const ServiceSelection = ({ shop, onServiceSelect, onBack }) => {
                           <span className="text-sm text-muted-foreground">₹{service.price}</span>
                         </div>
                       ))}
+                      {priorityType === 'emergency' && (
+                        <div className="flex justify-between items-center text-amber-500">
+                          <span>Emergency Priority</span>
+                          <span>+₹100</span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-primary/20">
                       <div>
                         <p className="text-sm text-muted-foreground">Total Duration: {getTotalDuration()} min</p>
                         <p className="text-sm text-muted-foreground">
                           Estimated wait: ~{shop.currentQueue * getTotalDuration()} minutes
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Payment: {PAYMENT_OPTIONS.find(p => p.value === paymentOption)?.label}
                         </p>
                       </div>
                       <div className="text-right">

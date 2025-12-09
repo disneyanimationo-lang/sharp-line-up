@@ -8,15 +8,20 @@ import ServiceSelection from '@/components/customer/ServiceSelection';
 import QueueStatus from '@/components/customer/QueueStatus';
 import ProfileSettings from '@/components/customer/ProfileSettings';
 import ActiveQueueBanner from '@/components/customer/ActiveQueueBanner';
+import BookingTypeSelector from '@/components/customer/BookingTypeSelector';
+import AppointmentBooking from '@/components/customer/AppointmentBooking';
+import AppointmentConfirmation from '@/components/customer/AppointmentConfirmation';
 import { useAuth } from '@/hooks/useMockAuth';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
 const Index = () => {
-  const [view, setView] = useState('home'); // home, shops, service, queue, profile
-  const [selectedShop, setSelectedShop] = useState(null);
-  const [selectedService, setSelectedService] = useState(null);
-  const [queueData, setQueueData] = useState(null);
+  const [view, setView] = useState('home'); // home, shops, bookingType, service, appointment, queue, confirmation, profile
+  const [selectedShop, setSelectedShop] = useState<any>(null);
+  const [selectedService, setSelectedService] = useState<any>(null);
+  const [queueData, setQueueData] = useState<any>(null);
+  const [appointmentData, setAppointmentData] = useState<any>(null);
   const {
     user,
     isShopOwner,
@@ -32,20 +37,49 @@ const Index = () => {
       navigate('/dashboard');
     }
   }, [user, isShopOwner, loading, navigate]);
-  const handleShopSelect = shop => {
+
+  const handleShopSelect = (shop: any) => {
     setSelectedShop(shop);
-    setView('service');
+    setView('bookingType');
   };
-  const handleServiceSelect = (service, queue) => {
+
+  const handleBookingTypeSelect = (type: 'queue' | 'appointment') => {
+    if (type === 'queue') {
+      setView('service');
+    } else {
+      setView('appointment');
+    }
+  };
+
+  const handleServiceSelect = (service: any, queue: any) => {
     setSelectedService(service);
     setQueueData(queue);
     setView('queue');
   };
+
+  const handleAppointmentSuccess = (appointment: any) => {
+    setAppointmentData(appointment);
+    setView('confirmation');
+  };
+
   const handleBackToShops = () => {
     setView('shops');
     setSelectedShop(null);
     setSelectedService(null);
     setQueueData(null);
+    setAppointmentData(null);
+  };
+
+  const handleBackToBookingType = () => {
+    setView('bookingType');
+  };
+
+  const handleGoHome = () => {
+    setView('home');
+    setSelectedShop(null);
+    setSelectedService(null);
+    setQueueData(null);
+    setAppointmentData(null);
   };
 
   const handleQueueClick = (queue: any, service: any, shop: any) => {
@@ -54,14 +88,24 @@ const Index = () => {
     setSelectedShop(shop);
     setView('queue');
   };
+
   if (view === 'shops') {
     return <ShopList onShopSelect={handleShopSelect} onBack={() => setView('home')} />;
   }
+  if (view === 'bookingType' && selectedShop) {
+    return <BookingTypeSelector shop={selectedShop} onSelectType={handleBookingTypeSelect} onBack={handleBackToShops} />;
+  }
   if (view === 'service' && selectedShop) {
-    return <ServiceSelection shop={selectedShop} onServiceSelect={handleServiceSelect} onBack={handleBackToShops} />;
+    return <ServiceSelection shop={selectedShop} onServiceSelect={handleServiceSelect} onBack={handleBackToBookingType} />;
+  }
+  if (view === 'appointment' && selectedShop) {
+    return <AppointmentBooking shop={selectedShop} onSuccess={handleAppointmentSuccess} onBack={handleBackToBookingType} />;
   }
   if (view === 'queue' && queueData) {
     return <QueueStatus queueData={queueData} service={selectedService} shop={selectedShop} onBack={handleBackToShops} />;
+  }
+  if (view === 'confirmation' && appointmentData) {
+    return <AppointmentConfirmation appointment={appointmentData} onGoHome={handleGoHome} />;
   }
   if (view === 'profile') {
     return <ProfileSettings onBack={() => setView('home')} />;
