@@ -14,6 +14,142 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointment_services: {
+        Row: {
+          appointment_id: string
+          created_at: string | null
+          id: string
+          service_id: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string | null
+          id?: string
+          service_id: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string | null
+          id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_services_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointments: {
+        Row: {
+          appointment_date: string
+          appointment_time: string
+          created_at: string | null
+          customer_name: string
+          emergency_reason: string | null
+          id: string
+          payment_preference: Database["public"]["Enums"]["payment_preference"]
+          payment_status: string
+          priority_type: Database["public"]["Enums"]["priority_type"]
+          shop_id: string
+          status: string
+          total_price: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          appointment_date: string
+          appointment_time: string
+          created_at?: string | null
+          customer_name: string
+          emergency_reason?: string | null
+          id?: string
+          payment_preference?: Database["public"]["Enums"]["payment_preference"]
+          payment_status?: string
+          priority_type?: Database["public"]["Enums"]["priority_type"]
+          shop_id: string
+          status?: string
+          total_price?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          appointment_date?: string
+          appointment_time?: string
+          created_at?: string | null
+          customer_name?: string
+          emergency_reason?: string | null
+          id?: string
+          payment_preference?: Database["public"]["Enums"]["payment_preference"]
+          payment_status?: string
+          priority_type?: Database["public"]["Enums"]["priority_type"]
+          shop_id?: string
+          status?: string
+          total_price?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_loyalty: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_vip: boolean
+          last_visit_at: string | null
+          shop_id: string
+          updated_at: string | null
+          user_id: string | null
+          visit_count: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_vip?: boolean
+          last_visit_at?: string | null
+          shop_id: string
+          updated_at?: string | null
+          user_id?: string | null
+          visit_count?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_vip?: boolean
+          last_visit_at?: string | null
+          shop_id?: string
+          updated_at?: string | null
+          user_id?: string | null
+          visit_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_loyalty_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -81,7 +217,12 @@ export type Database = {
           estimated_wait: number
           id: string
           joined_at: string | null
+          payment_preference:
+            | Database["public"]["Enums"]["payment_preference"]
+            | null
+          payment_status: string | null
           position: number
+          priority_type: Database["public"]["Enums"]["priority_type"] | null
           rating: number | null
           review_text: string | null
           service_id: string
@@ -95,7 +236,12 @@ export type Database = {
           estimated_wait: number
           id?: string
           joined_at?: string | null
+          payment_preference?:
+            | Database["public"]["Enums"]["payment_preference"]
+            | null
+          payment_status?: string | null
           position: number
+          priority_type?: Database["public"]["Enums"]["priority_type"] | null
           rating?: number | null
           review_text?: string | null
           service_id: string
@@ -109,7 +255,12 @@ export type Database = {
           estimated_wait?: number
           id?: string
           joined_at?: string | null
+          payment_preference?:
+            | Database["public"]["Enums"]["payment_preference"]
+            | null
+          payment_status?: string | null
           position?: number
+          priority_type?: Database["public"]["Enums"]["priority_type"] | null
           rating?: number | null
           review_text?: string | null
           service_id?: string
@@ -344,6 +495,8 @@ export type Database = {
     }
     Enums: {
       app_role: "customer" | "shop_owner" | "admin"
+      payment_preference: "pay_now" | "pay_at_shop" | "pay_after_service"
+      priority_type: "regular" | "loyalty" | "emergency" | "vip"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -472,6 +625,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["customer", "shop_owner", "admin"],
+      payment_preference: ["pay_now", "pay_at_shop", "pay_after_service"],
+      priority_type: ["regular", "loyalty", "emergency", "vip"],
     },
   },
 } as const
